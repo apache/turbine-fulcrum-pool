@@ -286,12 +286,7 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
     private Map capacityMap;
     private FactoryService factoryService;
     private ServiceManager manager;
-    /**
-     * Constructs a Pool Service.
-     */
-    public DefaultPoolService()
-    {
-    }
+
     /**
      * Gets an instance of a named class either from the pool
      * or by calling the Factory Service if the pool is empty.
@@ -568,10 +563,11 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      *
      * @return the factory service.
      */
-    private FactoryService getFactory()
+    protected FactoryService getFactory()
     {
         return factoryService;
     }
+    
     // ---------------- Avalon Lifecycle Methods ---------------------
     /**
      * Avalon component lifecycle method

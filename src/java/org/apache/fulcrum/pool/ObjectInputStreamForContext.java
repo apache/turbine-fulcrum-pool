@@ -39,10 +39,10 @@ public class ObjectInputStreamForContext extends ObjectInputStream
      */
     private ClassLoader classLoader;
 
-    // this is to make the proxy happy.
     public ObjectInputStreamForContext()
         throws IOException
     {
+        // this is to make the proxy happy.
     }
 
     /**
