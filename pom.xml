@@ -84,6 +84,11 @@
 
   <dependencies>
     <dependency>
+      <groupId>org.apache.avalon.framework</groupId>
+      <artifactId>avalon-framework-api</artifactId>
+      <version>4.3.1</version>
+    </dependency>
+    <dependency>
       <groupId>org.apache.fulcrum</groupId>
       <artifactId>fulcrum-factory</artifactId>
       <version>1.0.4-SNAPSHOT</version>
