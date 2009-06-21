@@ -19,11 +19,16 @@
 -->
 <document>
   <properties>
-    <title>Fulcrum Pool Impl</title>
+    <title>Fulcrum Pool Component</title>
     <author email="epugh@opensourceconnections.com">Eric Pugh</author>
   </properties>
 
   <body>
+    <release version="1.0.4" date="2009-06-21">
+      <action dev="tv" type="add">
+        Added a Maven-2 build
+      </action>
+    </release>
     <release version="1.0.3" date="2004-11-24">
       <action dev="epugh" type="update" due-to="Kostyantyn Shchekotykhin">
         Merge api and impl jars into one project.

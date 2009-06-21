@@ -21,7 +21,7 @@
 <document>
 
   <properties>
-    <title>Pool Component</title>
+    <title>Fulcrum Pool Component</title>
     <author email="epugh@upstate.com">Eric PUgh</author>
   </properties>
 
@@ -31,7 +31,7 @@
 
     <p>
       The Pool Service extends the functionality of the Factory Service by adding
-      support for pooling objects intantiated from the given class name or
+      support for pooling objects instantiated from the given class name or
       Class object reference. Pooling of objects stabilizes memory consumption and
       reduces garbage collection making response times in server applications
       more predictable.
