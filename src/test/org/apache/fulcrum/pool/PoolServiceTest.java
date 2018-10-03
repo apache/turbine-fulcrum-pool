@@ -53,8 +53,8 @@ public class PoolServiceTest extends BaseUnitTest
      */
     public void testGetInstanceClass() throws PoolException
     {
-        Object object = poolService.getInstance(StringBuffer.class);
-        assertTrue(object instanceof StringBuffer);
+        Object object = poolService.getInstance(StringBuilder.class);
+        assertTrue(object instanceof StringBuilder);
 
     }
 
