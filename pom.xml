@@ -114,6 +114,18 @@
   <build>
     <sourceDirectory>${basedir}/src/java</sourceDirectory>
     <testSourceDirectory>${basedir}/src/test</testSourceDirectory>
+    
+    <plugins>
+		<plugin>
+		    <groupId>org.apache.maven.plugins</groupId>
+		    <artifactId>maven-compiler-plugin</artifactId>
+		    <version>3.6.1</version>
+		    <configuration>
+		        <source>${maven.compiler.source}</source>
+		        <target>${maven.compiler.target}</target>
+		    </configuration>
+		</plugin>    
+    </plugins>
   </build>
 
   <profiles>
@@ -130,7 +142,11 @@
     </profile>
   </profiles>
   
+  
   <properties>
+	<maven.compiler.target>1.8</maven.compiler.target>
+	<maven.compiler.source>1.8</maven.compiler.source>
+  
     <!-- This bits are used for the staging directory -->
     <fulcrum.release.version>1.0.4</fulcrum.release.version>
     <fulcrum.rc.version>RC1</fulcrum.rc.version>  

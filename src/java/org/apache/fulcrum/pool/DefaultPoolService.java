@@ -1,5 +1,7 @@
 package org.apache.fulcrum.pool;
 
+import java.util.HashMap;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,18 +21,15 @@ package org.apache.fulcrum.pool;
  * under the License.
  */
 
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
+
 import org.apache.avalon.framework.activity.Disposable;
 import org.apache.avalon.framework.activity.Initializable;
-import org.apache.avalon.framework.service.ServiceManager;
-import org.apache.avalon.framework.service.Serviceable;
 import org.apache.avalon.framework.configuration.Configurable;
 import org.apache.avalon.framework.configuration.Configuration;
 import org.apache.avalon.framework.logger.AbstractLogEnabled;
+import org.apache.avalon.framework.service.ServiceManager;
+import org.apache.avalon.framework.service.Serviceable;
 import org.apache.fulcrum.factory.FactoryException;
 import org.apache.fulcrum.factory.FactoryService;
 
@@ -59,231 +58,14 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      */
     public static final String POOL_CAPACITY = "capacity";
     /**
-     * An inner class for class specific pools.
-     */
-    private class PoolBuffer
-    {
-        /**
-         * An inner class for cached recycle methods.
-         */
-        private class Recycler
-        {
-            /**
-             * The method.
-             */
-            private final Method recycle;
-            /**
-             * The signature.
-             */
-            private final String[] signature;
-            /**
-             * Constructs a new recycler.
-             *
-             * @param rec the recycle method.
-             * @param sign the signature.
-             */
-            public Recycler(Method rec, String[] sign)
-            {
-                recycle = rec;
-                signature = (sign != null) && (sign.length > 0) ? sign : null;
-            }
-            /**
-             * Matches the given signature against
-             * that of the recycle method of this recycler.
-             *
-             * @param sign the signature.
-             * @return the matching recycle method or null.
-             */
-            public Method match(String[] sign)
-            {
-                if ((sign != null) && (sign.length > 0))
-                {
-                    if ((signature != null) && (sign.length == signature.length))
-                    {
-                        for (int i = 0; i < signature.length; i++)
-                        {
-                            if (!signature[i].equals(sign[i]))
-                            {
-                                return null;
-                            }
-                        }
-                        return recycle;
-                    }
-                    else
-                    {
-                        return null;
-                    }
-                }
-                else if (signature == null)
-                {
-                    return recycle;
-                }
-                else
-                {
-                    return null;
-                }
-            }
-        }
-        /**
-         * A buffer for class instances.
-         */
-        private BoundedBuffer pool;
-        /**
-         * A flag to determine if a more efficient recycler is implemented.
-         */
-        private boolean arrayCtorRecyclable;
-        /**
-         * A cache for recycling methods.
-         */
-        private ArrayList recyclers;
-        /**
-         * Contructs a new pool buffer with a specific capacity.
-         *
-         * @param capacity a capacity.
-         */
-        public PoolBuffer(int capacity)
-        {
-            pool = new BoundedBuffer(capacity);
-        }
-        /**
-         * Tells pool that it contains objects which can be
-         * initialized using an Object array.
-         *
-         * @param isArrayCtor a <code>boolean</code> value
-         */
-        public void setArrayCtorRecyclable(boolean isArrayCtor)
-        {
-            arrayCtorRecyclable = isArrayCtor;
-        }
-        /**
-         * Polls for an instance from the pool.
-         *
-         * @return an instance or null.
-         */
-        public Object poll(Object[] params, String[] signature) throws PoolException
-        {
-            Object instance = pool.poll();
-            if (instance != null)
-            {
-                if (arrayCtorRecyclable)
-                {
-                    ((ArrayCtorRecyclable) instance).recycle(params);
-                }
-                else if (instance instanceof Recyclable)
-                {
-                    try
-                    {
-                        if ((signature != null) && (signature.length > 0))
-                        {
-                            /* Get the recycle method from the cache. */
-                            Method recycle = getRecycle(signature);
-                            if (recycle == null)
-                            {
-                                synchronized (this)
-                                {
-                                    /* Make a synchronized recheck. */
-                                    recycle = getRecycle(signature);
-                                    if (recycle == null)
-                                    {
-                                        Class clazz = instance.getClass();
-                                        recycle =
-                                            clazz.getMethod(
-                                                "recycle",
-                                                getFactory().getSignature(clazz, params, signature));
-                                        ArrayList cache =
-                                            recyclers != null ? (ArrayList) recyclers.clone() : new ArrayList();
-                                        cache.add(new Recycler(recycle, signature));
-                                        recyclers = cache;
-                                    }
-                                }
-                            }
-                            recycle.invoke(instance, params);
-                        }
-                        else
-                        {
-                            ((Recyclable) instance).recycle();
-                        }
-                    }
-                    catch (Exception x)
-                    {
-                        throw new PoolException("Recycling failed for " + instance.getClass().getName(), x);
-                    }
-                }
-            }
-            return instance;
-        }
-        /**
-         * Offers an instance to the pool.
-         *
-         * @param instance an instance.
-         */
-        public boolean offer(Object instance)
-        {
-            if (instance instanceof Recyclable)
-            {
-                try
-                {
-                    ((Recyclable) instance).dispose();
-                }
-                catch (Exception x)
-                {
-                    return false;
-                }
-            }
-            return pool.offer(instance);
-        }
-        /**
-         * Returns the capacity of the pool.
-         *
-         * @return the capacity.
-         */
-        public int capacity()
-        {
-            return pool.capacity();
-        }
-        /**
-         * Returns the size of the pool.
-         *
-         * @return the size.
-         */
-        public int size()
-        {
-            return pool.size();
-        }
-        /**
-         * Returns a cached recycle method
-         * corresponding to the given signature.
-         *
-         * @param signature the signature.
-         * @return the recycle method or null.
-         */
-        private Method getRecycle(String[] signature)
-        {
-            ArrayList cache = recyclers;
-            if (cache != null)
-            {
-                Method recycle;
-                for (Iterator i = cache.iterator(); i.hasNext();)
-                {
-                    recycle = ((Recycler) i.next()).match(signature);
-                    if (recycle != null)
-                    {
-                        return recycle;
-                    }
-                }
-            }
-            return null;
-        }
-    }
-    /**
      * The default capacity of pools.
      */
     private int poolCapacity = DEFAULT_POOL_CAPACITY;
     /**
      * The pool repository, one pool for each class.
      */
-    private HashMap poolRepository = new HashMap();
-    private Map capacityMap;
+    private HashMap<String, PoolBuffer> poolRepository = new HashMap<>();
+    private Map<String, Integer> capacityMap;
     private FactoryService factoryService;
     private ServiceManager manager;
 
@@ -400,7 +182,8 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      * @return the instance.
      * @throws PoolException if recycling fails.
      */
-    public Object getInstance(Class clazz) throws PoolException
+    @SuppressWarnings("unchecked")
+	public Object getInstance(Class clazz) throws PoolException
     {
         try
         {
@@ -446,17 +229,18 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      * @param instance the object instance to recycle.
      * @return true if the instance was accepted.
      */
-    public boolean putInstance(Object instance)
+    @SuppressWarnings("unchecked")
+	public boolean putInstance(Object instance)
     {
         if (instance != null)
         {
-            HashMap repository = poolRepository;
+            HashMap<String, PoolBuffer> repository = poolRepository;
             String className = instance.getClass().getName();
             PoolBuffer pool = (PoolBuffer) repository.get(className);
             if (pool == null)
             {
                 pool = new PoolBuffer(getCapacity(className));
-                repository = (HashMap) repository.clone();
+                repository = (HashMap<String, PoolBuffer>) repository.clone();
                 repository.put(className, pool);
                 poolRepository = repository;
                 if (instance instanceof ArrayCtorRecyclable)
@@ -505,10 +289,11 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      * @param className the name of the class.
      * @param capacity the new capacity.
      */
-    public void setCapacity(String className, int capacity)
+    @SuppressWarnings("unchecked")
+	public void setCapacity(String className, int capacity)
     {
-        HashMap repository = poolRepository;
-        repository = repository != null ? (HashMap) repository.clone() : new HashMap();
+        HashMap<String, PoolBuffer> repository = poolRepository;
+        repository = repository != null ? (HashMap<String, PoolBuffer>) repository.clone() : new HashMap<String, PoolBuffer>();
         repository.put(className, new PoolBuffer(capacity));
         poolRepository = repository;
     }
@@ -527,12 +312,13 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      *
      * @param className the name of the class.
      */
-    public void clearPool(String className)
+    @SuppressWarnings("unchecked")
+	public void clearPool(String className)
     {
-        HashMap repository = poolRepository;
+        HashMap<String, PoolBuffer> repository = poolRepository;
         if (repository.get(className) != null)
         {
-            repository = (HashMap) repository.clone();
+            repository = (HashMap<String, PoolBuffer>) repository.clone();
             repository.remove(className);
             poolRepository = repository;
         }
@@ -542,7 +328,7 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
      */
     public void clearPool()
     {
-        poolRepository = new HashMap();
+        poolRepository = new HashMap<String, PoolBuffer>();
     }
     /**
      * Polls and recycles an object of the named class from the pool.
@@ -556,7 +342,7 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
     private Object pollInstance(String className, Object[] params, String[] signature) throws PoolException
     {
         PoolBuffer pool = (PoolBuffer) poolRepository.get(className);
-        return pool != null ? pool.poll(params, signature) : null;
+        return pool != null ? pool.poll(params, signature, factoryService) : null;
     }
     /**
      * Gets the factory service.
@@ -597,7 +383,7 @@ public class DefaultPoolService extends AbstractLogEnabled implements PoolServic
                     }
                     if (capacityMap == null)
                     {
-                        capacityMap = new HashMap();
+                        capacityMap = new HashMap<String, Integer>();
                     }
                     capacityMap.put(key, new Integer(capacity));
                 }
