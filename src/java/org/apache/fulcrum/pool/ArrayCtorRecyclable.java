@@ -35,6 +35,8 @@ public interface ArrayCtorRecyclable extends Recyclable
      * Recycles the object for a new client. Objects implementing
      * this interface must also provide a matching constructor.
      * The recycle methods must call their super.
+     * 
+     * @param params the parameters to recycle
      */
     public void recycle(Object[] params);
 }

@@ -1,6 +1,5 @@
 package org.apache.fulcrum.pool;
 
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -21,13 +20,10 @@ package org.apache.fulcrum.pool;
  */
 
 
-
-
-
 /**
  * An interface for objects that can be pooled and recycled several times
  * by different clients.  Pooled objects that implement this interface
- * use no argument ctor and recycle methods.  Initialization is taken
+ * use no argument or recycle methods.  Initialization is taken
  * care of using the init method.  This is a way to avoid
  * introspection/reflection when pooling an object.
  *
@@ -39,6 +35,9 @@ public interface InitableRecyclable extends Recyclable
     /**
      * This method should be called after retrieving the object from
      * the pool.
+     * 
+     * @param initObj the object to initialize
+     * @throws PoolException pool exception if failed to initialize
      */
     public void init(Object initObj) throws PoolException;
 }

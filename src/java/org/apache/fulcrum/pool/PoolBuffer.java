@@ -64,8 +64,12 @@ public class PoolBuffer
     }
     /**
      * Polls for an instance from the pool.
-     * @param factoryService 
-     *
+     * 
+     * 
+     * @param params object paramaters
+     * @param signature signature of the class
+     * @param factoryService service to add
+     * @throws PoolException if service failed to be found
      * @return an instance or null.
      */
     public Object poll(Object[] params, String[] signature, FactoryService factoryService) throws PoolException
@@ -98,7 +102,9 @@ public class PoolBuffer
                                         clazz.getMethod(
                                             "recycle",
                                             factoryService.getSignature(clazz, params, signature));
-                                    ArrayList<Recycler> cache =
+                                    
+                                    @SuppressWarnings("unchecked")
+									ArrayList<Recycler> cache =
                                         recyclers != null ? (ArrayList<Recycler>) recyclers.clone() : new ArrayList<Recycler>();
                                     cache.add(new Recycler(recycle, signature));
                                     recyclers = cache;
@@ -120,10 +126,12 @@ public class PoolBuffer
         }
         return instance;
     }
+    
     /**
      * Offers an instance to the pool.
-     *
+     * 
      * @param instance an instance.
+     * @return false if failed to dispose
      */
     public boolean offer(Object instance)
     {

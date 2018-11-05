@@ -107,7 +107,7 @@ public class BoundedBuffer
     /**
      * Puts an item in the buffer only if there is capacity available.
      *
-     * @param item the item to be inserted.
+     * @param x the item to be inserted.
      * @return true if accepted, else false.
      */
     public synchronized boolean offer(Object x)

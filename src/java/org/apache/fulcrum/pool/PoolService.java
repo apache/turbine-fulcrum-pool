@@ -90,6 +90,7 @@ public interface PoolService
      * Gets the capacity of the pool for a named class.
      *
      * @param className the name of the class.
+     * @return total capacity
      */
     public int getCapacity(String className);
 
@@ -106,7 +107,8 @@ public interface PoolService
     /**
      * Gets the current size of the pool for a named class.
      *
-     * @param className the name of the class.
+     * @param className the name of the class
+     * @return the size of the pool for the class
      */
     public int getSize(String className);
 
