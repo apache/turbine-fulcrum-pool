@@ -37,14 +37,6 @@
     <url>http://svn.apache.org/viewvc/turbine/fulcrum/trunk/pool/</url>
   </scm>
 
-  <distributionManagement>
-    <site>
-      <id>apache.website</id>
-      <name>Fulcrum Website</name>
-      <url>${fulcrum.deployment.protocol}://people.apache.org/www/turbine.apache.org/fulcrum/fulcrum-pool/</url>
-    </site>    
-  </distributionManagement>
-	
   <developers>
     <developer>
       <name>Eric Pugh</name>
@@ -108,42 +100,10 @@
   <build>
     <sourceDirectory>${basedir}/src/java</sourceDirectory>
     <testSourceDirectory>${basedir}/src/test</testSourceDirectory>
-    
-    <plugins>
-		<plugin>
-		    <groupId>org.apache.maven.plugins</groupId>
-		    <artifactId>maven-compiler-plugin</artifactId>
-		    <configuration>
-		        <source>${maven.compiler.source}</source>
-		        <target>${maven.compiler.target}</target>
-		    </configuration>
-		</plugin>    
-    </plugins>
   </build>
 
-  <profiles>
-    <profile>
-      <id>rc</id>
-      <distributionManagement>
-        <!-- Cannot define in parent ATM, see COMMONSSITE-26 -->
-        <site>
-          <id>apache.website</id>
-          <name>Apache Fulcrum Release Candidate Staging Site</name>
-          <url>${fulcrum.deployment.protocol}://people.apache.org/www/turbine.apache.org/builds/fulcrum/${fulcrum.componentid}/${fulcrum.release.version}/${fulcrum.rc.version}/site</url>
-        </site>
-      </distributionManagement>
-    </profile>
-  </profiles>
-  
-  
   <properties>
-	<maven.compiler.target>1.8</maven.compiler.target>
-	<maven.compiler.source>1.8</maven.compiler.source>
-  
-    <!-- This bits are used for the staging directory -->
-    <fulcrum.release.version>1.0.4</fulcrum.release.version>
-    <fulcrum.rc.version>RC1</fulcrum.rc.version>  
-    <fulcrum.deployment.protocol>scpexe</fulcrum.deployment.protocol>
+    <turbine.site.path>fulcrum/fulcrum-pool</turbine.site.path>
   </properties>  
 	
 </project>
