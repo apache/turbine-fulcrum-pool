@@ -25,23 +25,22 @@ package org.apache.fulcrum.pool;
  * @author <a href="mailto:epugh@upstate.com">Eric Pugh</a>
  * @version $Id$
  */
-public class PoolException extends Exception
-{
-    /**
-     * Serial number
-     */
-    private static final long serialVersionUID = 8192045560423973532L;
+public class PoolException extends Exception {
+	
+	/**
+	 * Serial number
+	 */
+	private static final long serialVersionUID = 8192045560423973532L;
 
-    public PoolException(String msg)
-    {
-        super(msg);
-    }
-	public PoolException(Exception ex)
-	  {
-		  super(ex);
-	  }
-    public PoolException(String msg, Exception ex)
-    {
-        super(msg, ex);
-    }
+	public PoolException(String msg) {
+		super(msg);
+	}
+
+	public PoolException(Exception ex) {
+		super(ex);
+	}
+
+	public PoolException(String msg, Exception ex) {
+		super(msg, ex);
+	}
 }

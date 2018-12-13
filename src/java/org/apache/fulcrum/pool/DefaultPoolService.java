@@ -56,10 +56,12 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * The property specifying the pool capacity.
 	 */
 	public static final String POOL_CAPACITY = "capacity";
+	
 	/**
 	 * The default capacity of pools.
 	 */
 	private int poolCapacity = DEFAULT_POOL_CAPACITY;
+	
 	/**
 	 * The pool repository, one pool for each class.
 	 */
@@ -326,8 +328,9 @@ public class DefaultPoolService extends AbstractLogEnabled
 	}
 
 	// ---------------- Avalon Lifecycle Methods ---------------------
-	/**
+	/* (non-Javadoc)
 	 * Avalon component lifecycle method
+	 * @see org.apache.avalon.framework.configuration.Configurable#configure(org.apache.avalon.framework.configuration.Configuration)
 	 */
 	public void configure(Configuration conf) {
 		final Configuration capacities = conf.getChild(POOL_CAPACITY, false);
@@ -349,7 +352,7 @@ public class DefaultPoolService extends AbstractLogEnabled
 					if (capacityMap == null) {
 						capacityMap = new HashMap<String, Integer>();
 					}
-					capacityMap.put(key, new Integer(capacity));
+					capacityMap.put(key, capacity);
 				}
 			}
 		}

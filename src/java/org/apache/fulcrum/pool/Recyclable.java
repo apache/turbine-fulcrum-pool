@@ -1,6 +1,5 @@
 package org.apache.fulcrum.pool;
 
-
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -20,38 +19,35 @@ package org.apache.fulcrum.pool;
  * under the License.
  */
 
-
 /**
- * An interface for objects that can be pooled and
- * recycled several times by different clients.
+ * An interface for objects that can be pooled and recycled several times by
+ * different clients.
  *
  * @author <a href="mailto:ilkka.priha@simsoft.fi">Ilkka Priha</a>
  * @version $Id$
  */
-public interface Recyclable
-{
-    /**
-     * Recycles the object for a new client. Recycle methods with
-     * parameters must be added to implementing object and they will be
-     * automatically called by pool implementations when the object is
-     * taken from the pool for a new client. The parameters must
-     * correspond to the parameters of the constructors of the object.
-     * For new objects, constructors can call their corresponding recycle
-     * methods whenever applicable.
-     * The recycle methods must call their super.
-     */
-    public void recycle();
+public interface Recyclable {
+	
+	/**
+	 * Recycles the object for a new client. Recycle methods with parameters must be
+	 * added to implementing object and they will be automatically called by pool
+	 * implementations when the object is taken from the pool for a new client. The
+	 * parameters must correspond to the parameters of the constructors of the
+	 * object. For new objects, constructors can call their corresponding recycle
+	 * methods whenever applicable. The recycle methods must call their super.
+	 */
+	public void recycle();
 
-    /**
-     * Disposes the object after use. The method is called
-     * when the object is returned to its pool.
-     * The dispose method must call its super.
-     */
-    public void dispose();
+	/**
+	 * Disposes the object after use. The method is called when the object is
+	 * returned to its pool. The dispose method must call its super.
+	 */
+	public void dispose();
 
-    /**
-     * Checks whether the recyclable has been disposed.
-     * @return true, if the recyclable is disposed.
-     */
-    public boolean isDisposed();
+	/**
+	 * Checks whether the recyclable has been disposed.
+	 * 
+	 * @return true, if the recyclable is disposed.
+	 */
+	public boolean isDisposed();
 }
