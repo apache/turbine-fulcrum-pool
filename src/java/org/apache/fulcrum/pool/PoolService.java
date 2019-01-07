@@ -30,12 +30,14 @@ package org.apache.fulcrum.pool;
  * For objects implementing the Recyclable interface, a recycle method will be
  * called, when they are taken from the pool, and a dispose method, when they
  * are returned to the pool.
+ * </p>
  *
  * @author <a href="mailto:ilkka.priha@simsoft.fi">Ilkka Priha</a>
  * @author <a href="mailto:mcconnell@apache.org">Stephen McConnell</a>
  * @version $Id$
  */
-public interface PoolService {
+public interface PoolService 
+{
 	/** Avalon role - used to id the component within the manager */
 	String ROLE = PoolService.class.getName();
 

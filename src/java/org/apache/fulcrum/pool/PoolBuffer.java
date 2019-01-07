@@ -27,7 +27,8 @@ import org.apache.fulcrum.factory.FactoryService;
 /**
  * An inner class for class specific pools.
  */
-public class PoolBuffer {
+public class PoolBuffer 
+{
 
 	/**
 	 * A buffer for class instances.
@@ -49,7 +50,8 @@ public class PoolBuffer {
 	 *
 	 * @param capacity a capacity.
 	 */
-	public PoolBuffer(int capacity) {
+	public PoolBuffer(int capacity) 
+	{
 		pool = new BoundedBuffer(capacity);
 	}
 
@@ -59,7 +61,8 @@ public class PoolBuffer {
 	 *
 	 * @param isArrayCtor a <code>boolean</code> value
 	 */
-	public void setArrayCtorRecyclable(boolean isArrayCtor) {
+	public void setArrayCtorRecyclable(boolean isArrayCtor) 
+	{
 		arrayCtorRecyclable = isArrayCtor;
 	}
 
@@ -73,21 +76,28 @@ public class PoolBuffer {
 	 * @throws PoolException if service failed to be found
 	 * @return an instance or null.
 	 */
-	public Object poll(Object[] params, String[] signature, FactoryService factoryService) throws PoolException {
+	public Object poll(Object[] params, String[] signature, FactoryService factoryService) throws PoolException 
+	{
 		Object instance = pool.poll();
-		if (instance != null) {
-			if (arrayCtorRecyclable) {
+		if (instance != null) 
+		{
+			if (arrayCtorRecyclable) 
+			{
 				((ArrayCtorRecyclable) instance).recycle(params);
 			} else if (instance instanceof Recyclable) {
-				try {
-					if (signature != null && signature.length > 0) {
+				try 
+				{
+					if (signature != null && signature.length > 0) 
+					{
 						/* Get the recycle method from the cache. */
 						Method recycle = getRecycle(signature);
-						if (recycle == null) {
+						if (recycle == null) 
+						{
 							synchronized (this) {
 								/* Make a synchronized recheck. */
 								recycle = getRecycle(signature);
-								if (recycle == null) {
+								if (recycle == null) 
+								{
 									Class<? extends Object> clazz = instance.getClass();
 									recycle = clazz.getMethod("recycle",
 											factoryService.getSignature(clazz, params, signature));
@@ -105,7 +115,9 @@ public class PoolBuffer {
 					} else {
 						((Recyclable) instance).recycle();
 					}
-				} catch (Exception x) {
+				} 
+				catch (Exception x) 
+				{
 					throw new PoolException("Recycling failed for " + instance.getClass().getName(), x);
 				}
 			}
@@ -119,11 +131,16 @@ public class PoolBuffer {
 	 * @param instance an instance.
 	 * @return false if failed to dispose
 	 */
-	public boolean offer(Object instance) {
-		if (instance instanceof Recyclable) {
-			try {
+	public boolean offer(Object instance) 
+	{
+		if (instance instanceof Recyclable) 
+		{
+			try 
+			{
 				((Recyclable) instance).dispose();
-			} catch (Exception x) {
+			} 
+			catch (Exception x) 
+			{
 				return false;
 			}
 		}
@@ -135,7 +152,8 @@ public class PoolBuffer {
 	 *
 	 * @return the capacity.
 	 */
-	public int capacity() {
+	public int capacity() 
+	{
 		return pool.capacity();
 	}
 
@@ -144,7 +162,8 @@ public class PoolBuffer {
 	 *
 	 * @return the size.
 	 */
-	public int size() {
+	public int size() 
+	{
 		return pool.size();
 	}
 
@@ -154,11 +173,14 @@ public class PoolBuffer {
 	 * @param signature the signature.
 	 * @return the recycle method or null.
 	 */
-	private Method getRecycle(String[] signature) {
+	private Method getRecycle(String[] signature) 
+	{
 		ArrayList<Recycler> cache = recyclers;
-		if (cache != null) {
+		if (cache != null) 
+		{
 			Method recycle;
-			for (Recycler recycler : cache) {
+			for (Recycler recycler : cache) 
+			{
 				recycle = recycler.match(signature);
 				if (recycle != null)
 					return recycle;

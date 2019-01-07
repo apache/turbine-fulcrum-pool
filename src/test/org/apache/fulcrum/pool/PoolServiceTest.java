@@ -20,13 +20,17 @@ package org.apache.fulcrum.pool;
  */
 
 import org.apache.fulcrum.testcontainer.BaseUnitTest;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * @author Eric Pugh
  * @author <a href="mailto:mcconnell@apache.org">Stephen McConnell</a>
  *
  */
-public class PoolServiceTest extends BaseUnitTest {
+public class PoolServiceTest extends BaseUnitTest 
+{
+	/** Default pool service **/
 	private PoolService poolService = null;
 
 	/**
@@ -34,7 +38,8 @@ public class PoolServiceTest extends BaseUnitTest {
 	 *
 	 * @param name the testcase's name.
 	 */
-	public PoolServiceTest(String name) {
+	public PoolServiceTest(String name) 
+	{
 		super(name);
 	}
 
@@ -43,7 +48,9 @@ public class PoolServiceTest extends BaseUnitTest {
 	 * 
 	 * @throws Exception generic exception
 	 */
-	public void setUp() throws Exception {
+	@Before
+	public void setUp() throws Exception 
+	{
 		super.setUp();
 
 		poolService = (PoolService) this.resolve(PoolService.class.getName());
@@ -54,13 +61,17 @@ public class PoolServiceTest extends BaseUnitTest {
 	 * 
 	 * @throws PoolException generic exception
 	 */
-	public void testGetInstanceClass() throws PoolException {
+	@Test
+	public void testGetInstanceClass() throws PoolException 
+	{
 		Object object = poolService.getInstance(StringBuilder.class);
 		assertTrue(object instanceof StringBuilder);
 
 	}
 
-	public void testPutInstance() {
+	@Test
+	public void testPutInstance() 
+	{
 		String s = "I am a string";
 		assertEquals(0, poolService.getSize("java.lang.String"));
 		poolService.putInstance(s);
@@ -68,14 +79,18 @@ public class PoolServiceTest extends BaseUnitTest {
 
 	}
 
-	public void testGetSetCapacity() {
+	@Test
+	public void testGetSetCapacity() 
+	{
 		assertEquals(128, poolService.getCapacity("java.lang.String"));
 		poolService.setCapacity("java.lang.String", 278);
 		assertEquals(278, poolService.getCapacity("java.lang.String"));
 
 	}
 
-	public void testGetSize() {
+	@Test
+	public void testGetSize() 
+	{
 		String s = "I am a string";
 		assertEquals(0, poolService.getSize("java.lang.String"));
 		poolService.putInstance(s);
@@ -83,31 +98,37 @@ public class PoolServiceTest extends BaseUnitTest {
 
 	}
 
-	/*
+	/**
 	 * Class to test for void clearPool(String)
 	 */
-	public void testClearPoolString() {
+	@Test
+	public void testClearPoolString() 
+	{
 		String s = "I am a string";
 		assertEquals(0, poolService.getSize("java.lang.String"));
+		
 		poolService.putInstance(s);
 		assertEquals(1, poolService.getSize("java.lang.String"));
+		
 		poolService.clearPool("java.lang.String");
 		assertEquals(0, poolService.getSize("java.lang.String"));
-
 	}
 
 	/*
 	 * Class to test for void clearPool()
 	 */
-	public void testClearPool() {
+	@Test
+	public void testClearPool() 
+	{
 		String s = "I am a string";
 		assertEquals(0, poolService.getSize("java.lang.String"));
+		
 		poolService.putInstance(s);
 		poolService.putInstance(new Double(32));
 		assertEquals(1, poolService.getSize("java.lang.String"));
+		
 		poolService.clearPool();
 		assertEquals(0, poolService.getSize("java.lang.String"));
 		assertEquals(0, poolService.getSize("java.lang.Double"));
-
 	}
 }

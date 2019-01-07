@@ -64,7 +64,8 @@ public class Recycler
     	} else {
 
     		// test if there is a match 
-	    	if ( !Arrays.equals(sign,  signature) ) {
+	    	if ( !Arrays.equals(sign,  signature) ) 
+	    	{
 	    		return null;
 	    	} else {
 	    		return recycle;

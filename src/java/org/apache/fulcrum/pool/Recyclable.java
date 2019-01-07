@@ -26,7 +26,8 @@ package org.apache.fulcrum.pool;
  * @author <a href="mailto:ilkka.priha@simsoft.fi">Ilkka Priha</a>
  * @version $Id$
  */
-public interface Recyclable {
+public interface Recyclable 
+{
 	
 	/**
 	 * Recycles the object for a new client. Recycle methods with parameters must be

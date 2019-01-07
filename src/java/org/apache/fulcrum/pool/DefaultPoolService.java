@@ -78,11 +78,15 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(String className) throws PoolException {
-		try {
+	public Object getInstance(String className) throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(className, null, null);
 			return instance == null ? getFactory().getInstance(className) : instance;
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -97,11 +101,15 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(String className, ClassLoader loader) throws PoolException {
-		try {
+	public Object getInstance(String className, ClassLoader loader) throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(className, null, null);
 			return instance == null ? getFactory().getInstance(className, loader) : instance;
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -118,11 +126,15 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(String className, Object[] params, String[] signature) throws PoolException {
-		try {
+	public Object getInstance(String className, Object[] params, String[] signature) throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(className, params, signature);
 			return instance == null ? getFactory().getInstance(className, params, signature) : instance;
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -142,11 +154,15 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @throws PoolException if recycling fails.
 	 */
 	public Object getInstance(String className, ClassLoader loader, Object[] params, String[] signature)
-			throws PoolException {
-		try {
+			throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(className, params, signature);
 			return instance == null ? getFactory().getInstance(className, loader, params, signature) : instance;
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -158,7 +174,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return true if class loaders are supported, false otherwise.
 	 * @throws FactoryException if test fails.
 	 */
-	public boolean isLoaderSupported(String className) throws FactoryException {
+	public boolean isLoaderSupported(String className) throws FactoryException 
+	{
 		return getFactory().isLoaderSupported(className);
 	}
 
@@ -171,11 +188,15 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @throws PoolException if recycling fails.
 	 */
 	@SuppressWarnings("unchecked")
-	public Object getInstance(Class clazz) throws PoolException {
-		try {
+	public Object getInstance(Class clazz) throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(clazz.getName(), null, null);
 			return instance == null ? factoryService.getInstance(clazz) : instance;
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -190,17 +211,19 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(Class clazz, Object params[], String signature[]) throws PoolException {
-		
-		try {
+	public Object getInstance(Class clazz, Object params[], String signature[]) throws PoolException 
+	{
+		try 
+		{
 			Object instance = pollInstance(clazz.getName(), params, signature);
-			// FactoryService fs = getFactory();
 			
 			// TODO There is a whacky .toString() on the clazz object, 
 			// but otherwise it won't compile
 			return instance == null ? getFactory().getInstance(clazz.toString(), params, signature) : instance;
 			
-		} catch (FactoryException fe) {
+		} 
+		catch (FactoryException fe) 
+		{
 			throw new PoolException(fe);
 		}
 	}
@@ -214,17 +237,21 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return true if the instance was accepted.
 	 */
 	@SuppressWarnings("unchecked")
-	public boolean putInstance(Object instance) {
-		if (instance != null) {
+	public boolean putInstance(Object instance) 
+	{
+		if (instance != null) 
+		{
 			HashMap<String, PoolBuffer> repository = poolRepository;
 			String className = instance.getClass().getName();
 			PoolBuffer pool = (PoolBuffer) repository.get(className);
-			if (pool == null) {
+			if (pool == null) 
+			{
 				pool = new PoolBuffer(getCapacity(className));
 				repository = (HashMap<String, PoolBuffer>) repository.clone();
 				repository.put(className, pool);
 				poolRepository = repository;
-				if (instance instanceof ArrayCtorRecyclable) {
+				if (instance instanceof ArrayCtorRecyclable) 
+				{
 					pool.setArrayCtorRecyclable(true);
 				}
 			}
@@ -239,14 +266,18 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 *
 	 * @param className the name of the class.
 	 */
-	public int getCapacity(String className) {
+	public int getCapacity(String className) 
+	{
 		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);
-		if (pool == null) {
+		if (pool == null) 
+		{
 			/* Check class specific capacity. */
 			int capacity = poolCapacity;
-			if (capacityMap != null) {
+			if (capacityMap != null) 
+			{
 				Integer cap = (Integer) capacityMap.get(className);
-				if (cap != null) {
+				if (cap != null) 
+				{
 					capacity = cap.intValue();
 				}
 			}
@@ -264,7 +295,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @param capacity  the new capacity.
 	 */
 	@SuppressWarnings("unchecked")
-	public void setCapacity(String className, int capacity) {
+	public void setCapacity(String className, int capacity) 
+	{
 		HashMap<String, PoolBuffer> repository = poolRepository;
 		repository = repository != null ? (HashMap<String, PoolBuffer>) repository.clone()
 				: new HashMap<String, PoolBuffer>();
@@ -277,7 +309,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 *
 	 * @param className the name of the class.
 	 */
-	public int getSize(String className) {
+	public int getSize(String className) 
+	{
 		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);
 		return pool != null ? pool.size() : 0;
 	}
@@ -288,9 +321,11 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @param className the name of the class.
 	 */
 	@SuppressWarnings("unchecked")
-	public void clearPool(String className) {
+	public void clearPool(String className) 
+	{
 		HashMap<String, PoolBuffer> repository = poolRepository;
-		if (repository.get(className) != null) {
+		if (repository.get(className) != null) 
+		{
 			repository = (HashMap<String, PoolBuffer>) repository.clone();
 			repository.remove(className);
 			poolRepository = repository;
@@ -300,7 +335,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	/**
 	 * Clears all instances from the pool.
 	 */
-	public void clearPool() {
+	public void clearPool() 
+	{
 		poolRepository = new HashMap<String, PoolBuffer>();
 	}
 
@@ -313,7 +349,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the object or null.
 	 * @throws PoolException if recycling fails.
 	 */
-	private Object pollInstance(String className, Object[] params, String[] signature) throws PoolException {
+	private Object pollInstance(String className, Object[] params, String[] signature) throws PoolException 
+	{
 		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);
 		return pool != null ? pool.poll(params, signature, factoryService) : null;
 	}
@@ -323,7 +360,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 *
 	 * @return the factory service.
 	 */
-	protected FactoryService getFactory() {
+	protected FactoryService getFactory() 
+	{
 		return factoryService;
 	}
 
@@ -332,26 +370,35 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * Avalon component lifecycle method
 	 * @see org.apache.avalon.framework.configuration.Configurable#configure(org.apache.avalon.framework.configuration.Configuration)
 	 */
-	public void configure(Configuration conf) {
+	public void configure(Configuration conf) 
+	{
 		final Configuration capacities = conf.getChild(POOL_CAPACITY, false);
-		if (capacities != null) {
+		if (capacities != null) 
+		{
 			Configuration defaultConf = capacities.getChild("default");
 			int capacity = defaultConf.getValueAsInteger(DEFAULT_POOL_CAPACITY);
-			if (capacity <= 0) {
+			if (capacity <= 0) 
+			{
 				throw new IllegalArgumentException("Capacity must be >0");
 			}
 			poolCapacity = capacity;
 			Configuration[] nameVal = capacities.getChildren();
-			for (int i = 0; i < nameVal.length; i++) {
+			for (int i = 0; i < nameVal.length; i++) 
+			{
 				String key = nameVal[i].getName();
-				if (!"default".equals(key)) {
+				if (!"default".equals(key)) 
+				{
 					capacity = nameVal[i].getValueAsInteger(poolCapacity);
-					if (capacity < 0) {
+					if (capacity < 0) 
+					{
 						capacity = poolCapacity;
 					}
-					if (capacityMap == null) {
+					
+					if (capacityMap == null) 
+					{
 						capacityMap = new HashMap<String, Integer>();
 					}
+					
 					capacityMap.put(key, capacity);
 				}
 			}
@@ -365,7 +412,8 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * 
 	 * @param manager the service manager
 	 */
-	public void service(ServiceManager manager) {
+	public void service(ServiceManager manager) 
+	{
 		this.manager = manager;
 	}
 
@@ -375,10 +423,14 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 *
 	 * @throws Exception if initialization fails.
 	 */
-	public void initialize() throws Exception {
-		try {
+	public void initialize() throws Exception 
+	{
+		try 
+		{
 			factoryService = (FactoryService) manager.lookup(FactoryService.ROLE);
-		} catch (Exception e) {
+		} 
+		catch (Exception e) 
+		{
 			throw new Exception("DefaultPoolService.initialize: Failed to get a Factory object", e);
 		}
 	}
@@ -386,8 +438,10 @@ public class DefaultPoolService extends AbstractLogEnabled
 	/**
 	 * Avalon component lifecycle method
 	 */
-	public void dispose() {
-		if (factoryService != null) {
+	public void dispose() 
+	{
+		if (factoryService != null) 
+		{
 			manager.release(factoryService);
 		}
 		factoryService = null;
