@@ -1,5 +1,8 @@
 package org.apache.fulcrum.pool;
 
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
@@ -19,41 +22,37 @@ package org.apache.fulcrum.pool;
  * under the License.
  */
 
-import org.apache.fulcrum.testcontainer.BaseUnitTest;
-import org.junit.Before;
-import org.junit.Test;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
+import org.apache.fulcrum.testcontainer.BaseUnit5Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+
 
 /**
+ * Basic testing of the PoolService Component
+ *
+ * @author <a href="mailto:painter@apache.org">Jeffery Painter</a>
  * @author Eric Pugh
  * @author <a href="mailto:mcconnell@apache.org">Stephen McConnell</a>
  *
  */
-public class PoolServiceTest extends BaseUnitTest 
+public class PoolServiceTest extends BaseUnit5Test 
 {
 	/** Default pool service **/
 	private PoolService poolService = null;
-
-	/**
-	 * Defines the testcase name for JUnit.
-	 *
-	 * @param name the testcase's name.
-	 */
-	public PoolServiceTest(String name) 
-	{
-		super(name);
-	}
 
 	/**
 	 * Perform pool service setup
 	 * 
 	 * @throws Exception generic exception
 	 */
-	@Before
+	@BeforeEach
 	public void setUp() throws Exception 
 	{
-		super.setUp();
-
-		poolService = (PoolService) this.resolve(PoolService.class.getName());
+        setConfigurationFileName("src/test/TestComponentConfig.xml");
+        setRoleFileName("src/test/TestRoleConfig.xml");
+        poolService = (PoolService) this.lookup(PoolService.class.getName());
 	}
 
 	/**
@@ -69,6 +68,9 @@ public class PoolServiceTest extends BaseUnitTest
 
 	}
 
+	/**
+	 * Test adding an instance to the pool
+	 */
 	@Test
 	public void testPutInstance() 
 	{
@@ -79,6 +81,9 @@ public class PoolServiceTest extends BaseUnitTest
 
 	}
 
+	/**
+	 * Test altering pool capacity
+	 */
 	@Test
 	public void testGetSetCapacity() 
 	{
@@ -88,6 +93,9 @@ public class PoolServiceTest extends BaseUnitTest
 
 	}
 
+	/**
+	 * Test to determine current size of the pool
+	 */
 	@Test
 	public void testGetSize() 
 	{
@@ -114,7 +122,7 @@ public class PoolServiceTest extends BaseUnitTest
 		assertEquals(0, poolService.getSize("java.lang.String"));
 	}
 
-	/*
+	/**
 	 * Class to test for void clearPool()
 	 */
 	@Test

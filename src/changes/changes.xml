@@ -26,6 +26,9 @@
   <body>
     <release version="1.0.5" date="in SVN">
        <action dev="painter" type="update">
+         Update test to use junit 5
+       </action>
+       <action dev="painter" type="update">
          Derive from Turbine parent POM 5
        </action>
        <action dev="painter" type="update">
