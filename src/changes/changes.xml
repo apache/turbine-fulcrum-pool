@@ -24,7 +24,12 @@
   </properties>
 
   <body>
-    <release version="1.0.5" date="in SVN">
+    <release version="1.0.6" date="in SVN">
+       <action dev="painter" type="update">
+         Move to generics
+       </action>
+    </release>
+    <release version="1.0.5" date="2019-01-11">
        <action dev="painter" type="update">
          Update test to use junit 5
        </action>

@@ -133,12 +133,13 @@ public class BoundedBuffer
      *
      * @return the oldest item from the buffer, or null if the buffer is empty.
      */
-    public synchronized Object poll()
+    public synchronized <T> T poll()
     {
         if (usedSlots_ > 0)
         {
             --usedSlots_;
-            Object old = array_[takePtr_];
+            @SuppressWarnings("unchecked")
+			T old = (T) array_[takePtr_];
             array_[takePtr_] = null;
             if (++takePtr_ >= array_.length)
                 takePtr_ = 0;

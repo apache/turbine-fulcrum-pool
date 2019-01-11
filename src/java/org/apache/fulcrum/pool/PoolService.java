@@ -50,23 +50,25 @@ public interface PoolService
 	 * Gets an instance of a specified class either from the pool or by
 	 * instantiating from the class if the pool is empty.
 	 *
+	 * @param <T> type of the instance
 	 * @param clazz the class.
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(Class clazz) throws PoolException;
+	public <T> T getInstance(Class<?> clazz) throws PoolException;
 
 	/**
 	 * Gets an instance of a specified class either from the pool or by
 	 * instantiating from the class if the pool is empty.
 	 *
+	 * @param <T>       type of the instance class
 	 * @param clazz     the class.
 	 * @param params    an array containing the parameters of the constructor.
 	 * @param signature an array containing the signature of the constructor.
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(Class clazz, Object params[], String signature[]) throws PoolException;
+	public <T> T getInstance(Class<?> clazz, Object params[], String signature[]) throws PoolException;
 
 	/**
 	 * Puts a used object back to the pool. Objects implementing the Recyclable

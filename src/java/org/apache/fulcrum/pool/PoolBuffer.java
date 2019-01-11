@@ -46,7 +46,7 @@ public class PoolBuffer
 	private ArrayList<Recycler> recyclers;
 
 	/**
-	 * Contructs a new pool buffer with a specific capacity.
+	 * Constructs a new pool buffer with a specific capacity.
 	 *
 	 * @param capacity a capacity.
 	 */
@@ -70,15 +70,15 @@ public class PoolBuffer
 	 * Polls for an instance from the pool.
 	 * 
 	 * 
-	 * @param params         object paramaters
+	 * @param params         object parameters
 	 * @param signature      signature of the class
 	 * @param factoryService service to add
 	 * @throws PoolException if service failed to be found
 	 * @return an instance or null.
 	 */
-	public Object poll(Object[] params, String[] signature, FactoryService factoryService) throws PoolException 
+	public <T> T poll(Object[] params, String[] signature, FactoryService factoryService) throws PoolException 
 	{
-		Object instance = pool.poll();
+		T instance = pool.poll();
 		if (instance != null) 
 		{
 			if (arrayCtorRecyclable) 

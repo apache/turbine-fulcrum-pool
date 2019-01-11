@@ -78,11 +78,11 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(String className) throws PoolException 
+	public <T> T getInstance(String className) throws PoolException 
 	{
 		try 
 		{
-			Object instance = pollInstance(className, null, null);
+			T instance = pollInstance(className, null, null);
 			return instance == null ? getFactory().getInstance(className) : instance;
 		} 
 		catch (FactoryException fe) 
@@ -183,17 +183,18 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * Gets an instance of a specified class either from the pool or by instatiating
 	 * from the class if the pool is empty.
 	 *
+	 * @param <T> type of the class
 	 * @param clazz the class.
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
 	@SuppressWarnings("unchecked")
-	public Object getInstance(Class clazz) throws PoolException 
+	public <T> T getInstance(Class<?> clazz) throws PoolException 
 	{
 		try 
 		{
-			Object instance = pollInstance(clazz.getName(), null, null);
-			return instance == null ? factoryService.getInstance(clazz) : instance;
+			T instance = pollInstance(clazz.getName(), null, null);
+			return instance == null ? (T) factoryService.getInstance(clazz) : instance;
 		} 
 		catch (FactoryException fe) 
 		{
@@ -211,11 +212,11 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the instance.
 	 * @throws PoolException if recycling fails.
 	 */
-	public Object getInstance(Class clazz, Object params[], String signature[]) throws PoolException 
+	public <T> T getInstance(Class<?> clazz, Object params[], String signature[]) throws PoolException 
 	{
 		try 
 		{
-			Object instance = pollInstance(clazz.getName(), params, signature);
+			T instance = pollInstance(clazz.getName(), params, signature);
 			
 			// TODO There is a whacky .toString() on the clazz object, 
 			// but otherwise it won't compile
@@ -349,7 +350,7 @@ public class DefaultPoolService extends AbstractLogEnabled
 	 * @return the object or null.
 	 * @throws PoolException if recycling fails.
 	 */
-	private Object pollInstance(String className, Object[] params, String[] signature) throws PoolException 
+	private <T> T pollInstance(String className, Object[] params, String[] signature) throws PoolException 
 	{
 		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);
 		return pool != null ? pool.poll(params, signature, factoryService) : null;
