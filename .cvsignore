@@ -1,6 +1,0 @@
-target
-*.log
-.classpath
-.project
-jcoverage.ser
-.merlin
