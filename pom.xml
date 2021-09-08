@@ -40,9 +40,9 @@
   </distributionManagement>
 
   <scm>
-    <connection>scm:svn:http://svn.apache.org/repos/asf/turbine/fulcrum/trunk/pool/</connection>
-    <developerConnection>scm:svn:https://svn.apache.org/repos/asf/turbine/fulcrum/trunk/pool/</developerConnection>
-    <url>http://svn.apache.org/viewvc/turbine/fulcrum/trunk/pool/</url>
+    <connection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-pool.git</connection>
+    <developerConnection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-pool.git</developerConnection>
+    <url>https://gitbox.apache.org/repos/asf/turbine-fulcrum-pool.git</url>
   </scm>
 
   <developers>
