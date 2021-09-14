@@ -1,0 +1,452 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>DefaultPoolService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">Fulcrum Pool</a> &gt; <a href="index.source.html" class="el_package">org.apache.fulcrum.pool</a> &gt; <span class="el_source">DefaultPoolService.java</span></div><h1>DefaultPoolService.java</h1><pre class="source lang-java linenums">package org.apache.fulcrum.pool;
+
+import java.util.HashMap;
+
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one
+ * or more contributor license agreements.  See the NOTICE file
+ * distributed with this work for additional information
+ * regarding copyright ownership.  The ASF licenses this file
+ * to you under the Apache License, Version 2.0 (the
+ * &quot;License&quot;); you may not use this file except in compliance
+ * with the License.  You may obtain a copy of the License at
+ *
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing,
+ * software distributed under the License is distributed on an
+ * &quot;AS IS&quot; BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+ * KIND, either express or implied.  See the License for the
+ * specific language governing permissions and limitations
+ * under the License.
+ */
+
+import java.util.Map;
+
+import org.apache.avalon.framework.activity.Disposable;
+import org.apache.avalon.framework.activity.Initializable;
+import org.apache.avalon.framework.configuration.Configurable;
+import org.apache.avalon.framework.configuration.Configuration;
+import org.apache.avalon.framework.logger.AbstractLogEnabled;
+import org.apache.avalon.framework.service.ServiceManager;
+import org.apache.avalon.framework.service.Serviceable;
+import org.apache.fulcrum.factory.FactoryException;
+import org.apache.fulcrum.factory.FactoryService;
+
+/**
+ * The Pool Service extends the Factory Service by adding support for pooling
+ * instantiated objects. When a new instance is requested, the service first
+ * checks its pool if one is available. If the the pool is empty, a new instance
+ * will be requested from the FactoryService.
+ *
+ * For objects implementing the Recyclable interface, a recycle method will be
+ * called, when they taken from the pool, and a dispose method, when they are
+ * returned to the pool.
+ *
+ * @author &lt;a href=&quot;mailto:ilkka.priha@simsoft.fi&quot;&gt;Ilkka Priha&lt;/a&gt;
+ * @author &lt;a href=&quot;mailto:mcconnell@apache.org&quot;&gt;Stephen McConnell&lt;/a&gt;
+ * @version $Id$
+ *
+ * avalon.component name=&quot;pool&quot; lifestyle=&quot;transient&quot;
+ * avalon.service type=&quot;org.apache.fulcrum.pool.PoolService&quot;
+ */
+<span class="fc" id="L53">public class DefaultPoolService extends AbstractLogEnabled</span>
+		implements PoolService, Serviceable, Disposable, Initializable, Configurable {
+	/**
+	 * The property specifying the pool capacity.
+	 */
+	public static final String POOL_CAPACITY = &quot;capacity&quot;;
+	
+	/**
+	 * The default capacity of pools.
+	 */
+<span class="fc" id="L63">	private int poolCapacity = DEFAULT_POOL_CAPACITY;</span>
+	
+	/**
+	 * The pool repository, one pool for each class.
+	 */
+<span class="fc" id="L68">	private HashMap&lt;String, PoolBuffer&gt; poolRepository = new HashMap&lt;&gt;();</span>
+	private Map&lt;String, Integer&gt; capacityMap;
+	private FactoryService factoryService;
+	private ServiceManager manager;
+
+	/**
+	 * Gets an instance of a named class either from the pool or by calling the
+	 * Factory Service if the pool is empty.
+	 *
+	 * @param className the name of the class.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	public &lt;T&gt; T getInstance(String className) throws PoolException 
+	{
+		try 
+		{
+<span class="nc" id="L85">			T instance = pollInstance(className, null, null);</span>
+<span class="nc bnc" id="L86" title="All 2 branches missed.">			return instance == null ? getFactory().getInstance(className) : instance;</span>
+		} 
+<span class="nc" id="L88">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L90">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Gets an instance of a named class either from the pool or by calling the
+	 * Factory Service if the pool is empty. The specified class loader will be
+	 * passed to the Factory Service.
+	 *
+	 * @param className the name of the class.
+	 * @param loader    the class loader.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	public Object getInstance(String className, ClassLoader loader) throws PoolException 
+	{
+		try 
+		{
+<span class="nc" id="L108">			Object instance = pollInstance(className, null, null);</span>
+<span class="nc bnc" id="L109" title="All 2 branches missed.">			return instance == null ? getFactory().getInstance(className, loader) : instance;</span>
+		} 
+<span class="nc" id="L111">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L113">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Gets an instance of a named class either from the pool or by calling the
+	 * Factory Service if the pool is empty. Parameters for its constructor are
+	 * given as an array of objects, primitive types must be wrapped with a
+	 * corresponding class.
+	 *
+	 * @param className the name of the class.
+	 * @param params    an array containing the parameters of the constructor.
+	 * @param signature an array containing the signature of the constructor.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	public Object getInstance(String className, Object[] params, String[] signature) throws PoolException 
+	{
+		try 
+		{
+<span class="nc" id="L133">			Object instance = pollInstance(className, params, signature);</span>
+<span class="nc bnc" id="L134" title="All 2 branches missed.">			return instance == null ? getFactory().getInstance(className, params, signature) : instance;</span>
+		} 
+<span class="nc" id="L136">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L138">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Gets an instance of a named class either from the pool or by calling the
+	 * Factory Service if the pool is empty. Parameters for its constructor are
+	 * given as an array of objects, primitive types must be wrapped with a
+	 * corresponding class. The specified class loader will be passed to the Factory
+	 * Service.
+	 *
+	 * @param className the name of the class.
+	 * @param loader    the class loader.
+	 * @param params    an array containing the parameters of the constructor.
+	 * @param signature an array containing the signature of the constructor.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	public Object getInstance(String className, ClassLoader loader, Object[] params, String[] signature)
+			throws PoolException 
+	{
+		try 
+		{
+<span class="nc" id="L161">			Object instance = pollInstance(className, params, signature);</span>
+<span class="nc bnc" id="L162" title="All 2 branches missed.">			return instance == null ? getFactory().getInstance(className, loader, params, signature) : instance;</span>
+		} 
+<span class="nc" id="L164">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L166">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Tests if specified class loaders are supported for a named class.
+	 *
+	 * @param className the name of the class.
+	 * @return true if class loaders are supported, false otherwise.
+	 * @throws FactoryException if test fails.
+	 */
+	public boolean isLoaderSupported(String className) throws FactoryException 
+	{
+<span class="nc" id="L179">		return getFactory().isLoaderSupported(className);</span>
+	}
+
+	/**
+	 * Gets an instance of a specified class either from the pool or by instatiating
+	 * from the class if the pool is empty.
+	 *
+	 * @param &lt;T&gt; type of the class
+	 * @param clazz the class.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz) throws PoolException 
+	{
+		try 
+		{
+<span class="fc" id="L196">			T instance = pollInstance(clazz.getName(), null, null);</span>
+<span class="pc bpc" id="L197" title="1 of 2 branches missed.">			return instance == null ? (T) factoryService.getInstance(clazz) : instance;</span>
+		} 
+<span class="nc" id="L199">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L201">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Gets an instance of a specified class either from the pool or by instatiating
+	 * from the class if the pool is empty.
+	 *
+	 * @param clazz     the class.
+	 * @param params    an array containing the parameters of the constructor.
+	 * @param signature an array containing the signature of the constructor.
+	 * @return the instance.
+	 * @throws PoolException if recycling fails.
+	 */
+	public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz, Object params[], String signature[]) throws PoolException 
+	{
+		try 
+		{
+<span class="nc" id="L219">			T instance = pollInstance(clazz.getName(), params, signature);</span>
+			
+			// TODO There is a whacky .toString() on the clazz object, 
+			// but otherwise it won't compile
+<span class="nc bnc" id="L223" title="All 2 branches missed.">			return instance == null ? getFactory().getInstance(clazz.toString(), params, signature) : instance;</span>
+			
+		} 
+<span class="nc" id="L226">		catch (FactoryException fe) </span>
+		{
+<span class="nc" id="L228">			throw new PoolException(fe);</span>
+		}
+	}
+
+	/**
+	 * Puts a used object back to the pool. Objects implementing the Recyclable
+	 * interface can provide a recycle method to be called when they are reused and
+	 * a dispose method to be called when they are returned to the pool.
+	 *
+	 * @param instance the object instance to recycle.
+	 * @return true if the instance was accepted.
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public boolean putInstance(Object instance) 
+	{
+<span class="pc bpc" id="L243" title="1 of 2 branches missed.">		if (instance != null) </span>
+		{
+<span class="fc" id="L245">			HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</span>
+<span class="fc" id="L246">			String className = instance.getClass().getName();</span>
+<span class="fc" id="L247">			PoolBuffer pool = (PoolBuffer) repository.get(className);</span>
+<span class="pc bpc" id="L248" title="1 of 2 branches missed.">			if (pool == null) </span>
+			{
+<span class="fc" id="L250">				pool = new PoolBuffer(getCapacity(className));</span>
+<span class="fc" id="L251">				repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();</span>
+<span class="fc" id="L252">				repository.put(className, pool);</span>
+<span class="fc" id="L253">				poolRepository = repository;</span>
+<span class="pc bpc" id="L254" title="1 of 2 branches missed.">				if (instance instanceof ArrayCtorRecyclable) </span>
+				{
+<span class="nc" id="L256">					pool.setArrayCtorRecyclable(true);</span>
+				}
+			}
+<span class="fc" id="L259">			return pool.offer(instance);</span>
+		} else {
+<span class="nc" id="L261">			return false;</span>
+		}
+	}
+
+	/**
+	 * Gets the capacity of the pool for a named class.
+	 *
+	 * @param className the name of the class.
+	 */
+	public int getCapacity(String className) 
+	{
+<span class="fc" id="L272">		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</span>
+<span class="fc bfc" id="L273" title="All 2 branches covered.">		if (pool == null) </span>
+		{
+			/* Check class specific capacity. */
+<span class="fc" id="L276">			int capacity = poolCapacity;</span>
+<span class="pc bpc" id="L277" title="1 of 2 branches missed.">			if (capacityMap != null) </span>
+			{
+<span class="nc" id="L279">				Integer cap = (Integer) capacityMap.get(className);</span>
+<span class="nc bnc" id="L280" title="All 2 branches missed.">				if (cap != null) </span>
+				{
+<span class="nc" id="L282">					capacity = cap.intValue();</span>
+				}
+			}
+<span class="fc" id="L285">			return capacity;</span>
+		} else {
+<span class="fc" id="L287">			return pool.capacity();</span>
+		}
+	}
+
+	/**
+	 * Sets the capacity of the pool for a named class. Note that the pool will be
+	 * cleared after the change.
+	 *
+	 * @param className the name of the class.
+	 * @param capacity  the new capacity.
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void setCapacity(String className, int capacity) 
+	{
+<span class="fc" id="L301">		HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</span>
+<span class="pc bpc" id="L302" title="1 of 2 branches missed.">		repository = repository != null ? (HashMap&lt;String, PoolBuffer&gt;) repository.clone()</span>
+<span class="pc" id="L303">				: new HashMap&lt;String, PoolBuffer&gt;();</span>
+<span class="fc" id="L304">		repository.put(className, new PoolBuffer(capacity));</span>
+<span class="fc" id="L305">		poolRepository = repository;</span>
+<span class="fc" id="L306">	}</span>
+
+	/**
+	 * Gets the current size of the pool for a named class.
+	 *
+	 * @param className the name of the class.
+	 */
+	public int getSize(String className) 
+	{
+<span class="fc" id="L315">		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</span>
+<span class="fc bfc" id="L316" title="All 2 branches covered.">		return pool != null ? pool.size() : 0;</span>
+	}
+
+	/**
+	 * Clears instances of a named class from the pool.
+	 *
+	 * @param className the name of the class.
+	 */
+	@SuppressWarnings(&quot;unchecked&quot;)
+	public void clearPool(String className) 
+	{
+<span class="fc" id="L327">		HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</span>
+<span class="pc bpc" id="L328" title="1 of 2 branches missed.">		if (repository.get(className) != null) </span>
+		{
+<span class="fc" id="L330">			repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();</span>
+<span class="fc" id="L331">			repository.remove(className);</span>
+<span class="fc" id="L332">			poolRepository = repository;</span>
+		}
+<span class="fc" id="L334">	}</span>
+
+	/**
+	 * Clears all instances from the pool.
+	 */
+	public void clearPool() 
+	{
+<span class="fc" id="L341">		poolRepository = new HashMap&lt;String, PoolBuffer&gt;();</span>
+<span class="fc" id="L342">	}</span>
+
+	/**
+	 * Polls and recycles an object of the named class from the pool.
+	 *
+	 * @param className the name of the class.
+	 * @param params    an array containing the parameters of the constructor.
+	 * @param signature an array containing the signature of the constructor.
+	 * @return the object or null.
+	 * @throws PoolException if recycling fails.
+	 */
+	private &lt;T&gt; T pollInstance(String className, Object[] params, String[] signature) throws PoolException 
+	{
+<span class="fc" id="L355">		PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</span>
+<span class="pc bpc" id="L356" title="1 of 2 branches missed.">		return pool != null ? pool.poll(params, signature, factoryService) : null;</span>
+	}
+
+	/**
+	 * Gets the factory service.
+	 *
+	 * @return the factory service.
+	 */
+	protected FactoryService getFactory() 
+	{
+<span class="nc" id="L366">		return factoryService;</span>
+	}
+
+	// ---------------- Avalon Lifecycle Methods ---------------------
+	/* (non-Javadoc)
+	 * Avalon component lifecycle method
+	 * @see org.apache.avalon.framework.configuration.Configurable#configure(org.apache.avalon.framework.configuration.Configuration)
+	 */
+	public void configure(Configuration conf) 
+	{
+<span class="fc" id="L376">		final Configuration capacities = conf.getChild(POOL_CAPACITY, false);</span>
+<span class="pc bpc" id="L377" title="1 of 2 branches missed.">		if (capacities != null) </span>
+		{
+<span class="nc" id="L379">			Configuration defaultConf = capacities.getChild(&quot;default&quot;);</span>
+<span class="nc" id="L380">			int capacity = defaultConf.getValueAsInteger(DEFAULT_POOL_CAPACITY);</span>
+<span class="nc bnc" id="L381" title="All 2 branches missed.">			if (capacity &lt;= 0) </span>
+			{
+<span class="nc" id="L383">				throw new IllegalArgumentException(&quot;Capacity must be &gt;0&quot;);</span>
+			}
+<span class="nc" id="L385">			poolCapacity = capacity;</span>
+<span class="nc" id="L386">			Configuration[] nameVal = capacities.getChildren();</span>
+<span class="nc bnc" id="L387" title="All 2 branches missed.">			for (int i = 0; i &lt; nameVal.length; i++) </span>
+			{
+<span class="nc" id="L389">				String key = nameVal[i].getName();</span>
+<span class="nc bnc" id="L390" title="All 2 branches missed.">				if (!&quot;default&quot;.equals(key)) </span>
+				{
+<span class="nc" id="L392">					capacity = nameVal[i].getValueAsInteger(poolCapacity);</span>
+<span class="nc bnc" id="L393" title="All 2 branches missed.">					if (capacity &lt; 0) </span>
+					{
+<span class="nc" id="L395">						capacity = poolCapacity;</span>
+					}
+					
+<span class="nc bnc" id="L398" title="All 2 branches missed.">					if (capacityMap == null) </span>
+					{
+<span class="nc" id="L400">						capacityMap = new HashMap&lt;String, Integer&gt;();</span>
+					}
+					
+<span class="nc" id="L403">					capacityMap.put(key, capacity);</span>
+				}
+			}
+		}
+<span class="fc" id="L407">	}</span>
+
+	/**
+	 * Avalon component lifecycle method
+	 * 
+	 * {@link org.apache.fulcrum.factory.FactoryService}
+	 * 
+	 * @param manager the service manager
+	 */
+	public void service(ServiceManager manager) 
+	{
+<span class="fc" id="L418">		this.manager = manager;</span>
+<span class="fc" id="L419">	}</span>
+
+	/**
+	 * Avalon component lifecycle method Initializes the service by loading default
+	 * class loaders and customized object factories.
+	 *
+	 * @throws Exception if initialization fails.
+	 */
+	public void initialize() throws Exception 
+	{
+		try 
+		{
+<span class="fc" id="L431">			factoryService = (FactoryService) manager.lookup(FactoryService.ROLE);</span>
+		} 
+<span class="nc" id="L433">		catch (Exception e) </span>
+		{
+<span class="nc" id="L435">			throw new Exception(&quot;DefaultPoolService.initialize: Failed to get a Factory object&quot;, e);</span>
+<span class="fc" id="L436">		}</span>
+<span class="fc" id="L437">	}</span>
+
+	/**
+	 * Avalon component lifecycle method
+	 */
+	public void dispose() 
+	{
+<span class="pc bpc" id="L444" title="1 of 2 branches missed.">		if (factoryService != null) </span>
+		{
+<span class="fc" id="L446">			manager.release(factoryService);</span>
+		}
+<span class="fc" id="L448">		factoryService = null;</span>
+<span class="fc" id="L449">		manager = null;</span>
+<span class="fc" id="L450">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
