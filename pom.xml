@@ -19,7 +19,7 @@
   <parent>
     <artifactId>turbine-parent</artifactId>
        <groupId>org.apache.turbine</groupId>
-       <version>7</version>
+       <version>9-SNAPSHOT</version>
   </parent>
 
   <modelVersion>4.0.0</modelVersion>
@@ -31,13 +31,7 @@
   <description>Fulcrum Pool Service</description>
   <url>http://turbine.apache.org/fulcrum/fulcrum-pool</url>
 
-  <!-- Required for staging to work -->
-  <distributionManagement>
-    <site>
-      <id>turbine.apache.org</id>
-      <url>https://turbine.apache.org/fulcrum/fulcrum-pool/</url>
-    </site>
-  </distributionManagement>
+  <!-- distributionManagement id and url defined in parent, adapt turbine.site.path -->
 
   <scm>
     <connection>scm:git:https://gitbox.apache.org/repos/asf/turbine-fulcrum-pool.git</connection>
@@ -111,7 +105,7 @@
   </build>
 
   <properties>
-    <turbine.site.path>fulcrum/fulcrum-pool</turbine.site.path>
+    <turbine.site.path>turbine-fulcrum-pool</turbine.site.path>
     <turbine.scmPubCheckoutDirectory>${turbine.site.cache}/fulcrum/pool</turbine.scmPubCheckoutDirectory>
     <turbine.site.cache>${project.build.directory}/turbine-sites</turbine.site.cache>
     <siteContent.path>${project.build.directory}/staging</siteContent.path><!-- default stagingSiteURL -->
