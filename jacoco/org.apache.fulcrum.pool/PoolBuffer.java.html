@@ -105,7 +105,7 @@ public class PoolBuffer
 									@SuppressWarnings(&quot;unchecked&quot;)
 <span class="nc bnc" id="L106" title="All 2 branches missed.">									ArrayList&lt;Recycler&gt; cache = recyclers != null</span>
 <span class="nc" id="L107">											? (ArrayList&lt;Recycler&gt;) recyclers.clone()</span>
-<span class="nc" id="L108">											: new ArrayList&lt;Recycler&gt;();</span>
+											: new ArrayList&lt;Recycler&gt;();
 <span class="nc" id="L109">									cache.add(new Recycler(recycle, signature));</span>
 <span class="nc" id="L110">									recyclers = cache;</span>
 								}
@@ -189,4 +189,4 @@ public class PoolBuffer
 <span class="nc" id="L189">		return null;</span>
 	}
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

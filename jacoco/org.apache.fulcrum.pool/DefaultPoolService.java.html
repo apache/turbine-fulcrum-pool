@@ -300,7 +300,7 @@ import org.apache.fulcrum.factory.FactoryService;
 	{
 <span class="fc" id="L301">		HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</span>
 <span class="pc bpc" id="L302" title="1 of 2 branches missed.">		repository = repository != null ? (HashMap&lt;String, PoolBuffer&gt;) repository.clone()</span>
-<span class="pc" id="L303">				: new HashMap&lt;String, PoolBuffer&gt;();</span>
+				: new HashMap&lt;String, PoolBuffer&gt;();
 <span class="fc" id="L304">		repository.put(className, new PoolBuffer(capacity));</span>
 <span class="fc" id="L305">		poolRepository = repository;</span>
 <span class="fc" id="L306">	}</span>
@@ -449,4 +449,4 @@ import org.apache.fulcrum.factory.FactoryService;
 <span class="fc" id="L449">		manager = null;</span>
 <span class="fc" id="L450">	}</span>
 }
-</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.6.202009150832</span></div></body></html>
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

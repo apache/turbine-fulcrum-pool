@@ -1,463 +1,462 @@
-<!DOCTYPE HTML>
-<html lang="de">
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html lang="en">
 <head>
 <title>Source code</title>
 <link rel="stylesheet" type="text/css" href="../../../../../stylesheet.css" title="Style">
 </head>
 <body>
-<main role="main">
 <div class="sourceContainer">
-<pre><span class="sourceLineNo">001</span><a id="line.1">package org.apache.fulcrum.pool;</a>
-<span class="sourceLineNo">002</span><a id="line.2"></a>
-<span class="sourceLineNo">003</span><a id="line.3">import java.util.HashMap;</a>
-<span class="sourceLineNo">004</span><a id="line.4"></a>
-<span class="sourceLineNo">005</span><a id="line.5">/*</a>
-<span class="sourceLineNo">006</span><a id="line.6"> * Licensed to the Apache Software Foundation (ASF) under one</a>
-<span class="sourceLineNo">007</span><a id="line.7"> * or more contributor license agreements.  See the NOTICE file</a>
-<span class="sourceLineNo">008</span><a id="line.8"> * distributed with this work for additional information</a>
-<span class="sourceLineNo">009</span><a id="line.9"> * regarding copyright ownership.  The ASF licenses this file</a>
-<span class="sourceLineNo">010</span><a id="line.10"> * to you under the Apache License, Version 2.0 (the</a>
-<span class="sourceLineNo">011</span><a id="line.11"> * "License"); you may not use this file except in compliance</a>
-<span class="sourceLineNo">012</span><a id="line.12"> * with the License.  You may obtain a copy of the License at</a>
-<span class="sourceLineNo">013</span><a id="line.13"> *</a>
-<span class="sourceLineNo">014</span><a id="line.14"> *   http://www.apache.org/licenses/LICENSE-2.0</a>
-<span class="sourceLineNo">015</span><a id="line.15"> *</a>
-<span class="sourceLineNo">016</span><a id="line.16"> * Unless required by applicable law or agreed to in writing,</a>
-<span class="sourceLineNo">017</span><a id="line.17"> * software distributed under the License is distributed on an</a>
-<span class="sourceLineNo">018</span><a id="line.18"> * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY</a>
-<span class="sourceLineNo">019</span><a id="line.19"> * KIND, either express or implied.  See the License for the</a>
-<span class="sourceLineNo">020</span><a id="line.20"> * specific language governing permissions and limitations</a>
-<span class="sourceLineNo">021</span><a id="line.21"> * under the License.</a>
-<span class="sourceLineNo">022</span><a id="line.22"> */</a>
-<span class="sourceLineNo">023</span><a id="line.23"></a>
-<span class="sourceLineNo">024</span><a id="line.24">import java.util.Map;</a>
-<span class="sourceLineNo">025</span><a id="line.25"></a>
-<span class="sourceLineNo">026</span><a id="line.26">import org.apache.avalon.framework.activity.Disposable;</a>
-<span class="sourceLineNo">027</span><a id="line.27">import org.apache.avalon.framework.activity.Initializable;</a>
-<span class="sourceLineNo">028</span><a id="line.28">import org.apache.avalon.framework.configuration.Configurable;</a>
-<span class="sourceLineNo">029</span><a id="line.29">import org.apache.avalon.framework.configuration.Configuration;</a>
-<span class="sourceLineNo">030</span><a id="line.30">import org.apache.avalon.framework.logger.AbstractLogEnabled;</a>
-<span class="sourceLineNo">031</span><a id="line.31">import org.apache.avalon.framework.service.ServiceManager;</a>
-<span class="sourceLineNo">032</span><a id="line.32">import org.apache.avalon.framework.service.Serviceable;</a>
-<span class="sourceLineNo">033</span><a id="line.33">import org.apache.fulcrum.factory.FactoryException;</a>
-<span class="sourceLineNo">034</span><a id="line.34">import org.apache.fulcrum.factory.FactoryService;</a>
-<span class="sourceLineNo">035</span><a id="line.35"></a>
-<span class="sourceLineNo">036</span><a id="line.36">/**</a>
-<span class="sourceLineNo">037</span><a id="line.37"> * The Pool Service extends the Factory Service by adding support for pooling</a>
-<span class="sourceLineNo">038</span><a id="line.38"> * instantiated objects. When a new instance is requested, the service first</a>
-<span class="sourceLineNo">039</span><a id="line.39"> * checks its pool if one is available. If the the pool is empty, a new instance</a>
-<span class="sourceLineNo">040</span><a id="line.40"> * will be requested from the FactoryService.</a>
-<span class="sourceLineNo">041</span><a id="line.41"> *</a>
-<span class="sourceLineNo">042</span><a id="line.42"> * For objects implementing the Recyclable interface, a recycle method will be</a>
-<span class="sourceLineNo">043</span><a id="line.43"> * called, when they taken from the pool, and a dispose method, when they are</a>
-<span class="sourceLineNo">044</span><a id="line.44"> * returned to the pool.</a>
-<span class="sourceLineNo">045</span><a id="line.45"> *</a>
-<span class="sourceLineNo">046</span><a id="line.46"> * @author &lt;a href="mailto:ilkka.priha@simsoft.fi"&gt;Ilkka Priha&lt;/a&gt;</a>
-<span class="sourceLineNo">047</span><a id="line.47"> * @author &lt;a href="mailto:mcconnell@apache.org"&gt;Stephen McConnell&lt;/a&gt;</a>
-<span class="sourceLineNo">048</span><a id="line.48"> * @version $Id$</a>
-<span class="sourceLineNo">049</span><a id="line.49"> *</a>
-<span class="sourceLineNo">050</span><a id="line.50"> * avalon.component name="pool" lifestyle="transient"</a>
-<span class="sourceLineNo">051</span><a id="line.51"> * avalon.service type="org.apache.fulcrum.pool.PoolService"</a>
-<span class="sourceLineNo">052</span><a id="line.52"> */</a>
-<span class="sourceLineNo">053</span><a id="line.53">public class DefaultPoolService extends AbstractLogEnabled</a>
-<span class="sourceLineNo">054</span><a id="line.54">                implements PoolService, Serviceable, Disposable, Initializable, Configurable {</a>
-<span class="sourceLineNo">055</span><a id="line.55">        /**</a>
-<span class="sourceLineNo">056</span><a id="line.56">         * The property specifying the pool capacity.</a>
-<span class="sourceLineNo">057</span><a id="line.57">         */</a>
-<span class="sourceLineNo">058</span><a id="line.58">        public static final String POOL_CAPACITY = "capacity";</a>
-<span class="sourceLineNo">059</span><a id="line.59">        </a>
-<span class="sourceLineNo">060</span><a id="line.60">        /**</a>
-<span class="sourceLineNo">061</span><a id="line.61">         * The default capacity of pools.</a>
-<span class="sourceLineNo">062</span><a id="line.62">         */</a>
-<span class="sourceLineNo">063</span><a id="line.63">        private int poolCapacity = DEFAULT_POOL_CAPACITY;</a>
-<span class="sourceLineNo">064</span><a id="line.64">        </a>
-<span class="sourceLineNo">065</span><a id="line.65">        /**</a>
-<span class="sourceLineNo">066</span><a id="line.66">         * The pool repository, one pool for each class.</a>
-<span class="sourceLineNo">067</span><a id="line.67">         */</a>
-<span class="sourceLineNo">068</span><a id="line.68">        private HashMap&lt;String, PoolBuffer&gt; poolRepository = new HashMap&lt;&gt;();</a>
-<span class="sourceLineNo">069</span><a id="line.69">        private Map&lt;String, Integer&gt; capacityMap;</a>
-<span class="sourceLineNo">070</span><a id="line.70">        private FactoryService factoryService;</a>
-<span class="sourceLineNo">071</span><a id="line.71">        private ServiceManager manager;</a>
-<span class="sourceLineNo">072</span><a id="line.72"></a>
-<span class="sourceLineNo">073</span><a id="line.73">        /**</a>
-<span class="sourceLineNo">074</span><a id="line.74">         * Gets an instance of a named class either from the pool or by calling the</a>
-<span class="sourceLineNo">075</span><a id="line.75">         * Factory Service if the pool is empty.</a>
-<span class="sourceLineNo">076</span><a id="line.76">         *</a>
-<span class="sourceLineNo">077</span><a id="line.77">         * @param className the name of the class.</a>
-<span class="sourceLineNo">078</span><a id="line.78">         * @return the instance.</a>
-<span class="sourceLineNo">079</span><a id="line.79">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">080</span><a id="line.80">         */</a>
-<span class="sourceLineNo">081</span><a id="line.81">        public &lt;T&gt; T getInstance(String className) throws PoolException </a>
-<span class="sourceLineNo">082</span><a id="line.82">        {</a>
-<span class="sourceLineNo">083</span><a id="line.83">                try </a>
-<span class="sourceLineNo">084</span><a id="line.84">                {</a>
-<span class="sourceLineNo">085</span><a id="line.85">                        T instance = pollInstance(className, null, null);</a>
-<span class="sourceLineNo">086</span><a id="line.86">                        return instance == null ? getFactory().getInstance(className) : instance;</a>
-<span class="sourceLineNo">087</span><a id="line.87">                } </a>
-<span class="sourceLineNo">088</span><a id="line.88">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">089</span><a id="line.89">                {</a>
-<span class="sourceLineNo">090</span><a id="line.90">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">091</span><a id="line.91">                }</a>
-<span class="sourceLineNo">092</span><a id="line.92">        }</a>
-<span class="sourceLineNo">093</span><a id="line.93"></a>
-<span class="sourceLineNo">094</span><a id="line.94">        /**</a>
-<span class="sourceLineNo">095</span><a id="line.95">         * Gets an instance of a named class either from the pool or by calling the</a>
-<span class="sourceLineNo">096</span><a id="line.96">         * Factory Service if the pool is empty. The specified class loader will be</a>
-<span class="sourceLineNo">097</span><a id="line.97">         * passed to the Factory Service.</a>
-<span class="sourceLineNo">098</span><a id="line.98">         *</a>
-<span class="sourceLineNo">099</span><a id="line.99">         * @param className the name of the class.</a>
-<span class="sourceLineNo">100</span><a id="line.100">         * @param loader    the class loader.</a>
-<span class="sourceLineNo">101</span><a id="line.101">         * @return the instance.</a>
-<span class="sourceLineNo">102</span><a id="line.102">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">103</span><a id="line.103">         */</a>
-<span class="sourceLineNo">104</span><a id="line.104">        public Object getInstance(String className, ClassLoader loader) throws PoolException </a>
-<span class="sourceLineNo">105</span><a id="line.105">        {</a>
-<span class="sourceLineNo">106</span><a id="line.106">                try </a>
-<span class="sourceLineNo">107</span><a id="line.107">                {</a>
-<span class="sourceLineNo">108</span><a id="line.108">                        Object instance = pollInstance(className, null, null);</a>
-<span class="sourceLineNo">109</span><a id="line.109">                        return instance == null ? getFactory().getInstance(className, loader) : instance;</a>
-<span class="sourceLineNo">110</span><a id="line.110">                } </a>
-<span class="sourceLineNo">111</span><a id="line.111">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">112</span><a id="line.112">                {</a>
-<span class="sourceLineNo">113</span><a id="line.113">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">114</span><a id="line.114">                }</a>
-<span class="sourceLineNo">115</span><a id="line.115">        }</a>
-<span class="sourceLineNo">116</span><a id="line.116"></a>
-<span class="sourceLineNo">117</span><a id="line.117">        /**</a>
-<span class="sourceLineNo">118</span><a id="line.118">         * Gets an instance of a named class either from the pool or by calling the</a>
-<span class="sourceLineNo">119</span><a id="line.119">         * Factory Service if the pool is empty. Parameters for its constructor are</a>
-<span class="sourceLineNo">120</span><a id="line.120">         * given as an array of objects, primitive types must be wrapped with a</a>
-<span class="sourceLineNo">121</span><a id="line.121">         * corresponding class.</a>
-<span class="sourceLineNo">122</span><a id="line.122">         *</a>
-<span class="sourceLineNo">123</span><a id="line.123">         * @param className the name of the class.</a>
-<span class="sourceLineNo">124</span><a id="line.124">         * @param params    an array containing the parameters of the constructor.</a>
-<span class="sourceLineNo">125</span><a id="line.125">         * @param signature an array containing the signature of the constructor.</a>
-<span class="sourceLineNo">126</span><a id="line.126">         * @return the instance.</a>
-<span class="sourceLineNo">127</span><a id="line.127">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">128</span><a id="line.128">         */</a>
-<span class="sourceLineNo">129</span><a id="line.129">        public Object getInstance(String className, Object[] params, String[] signature) throws PoolException </a>
-<span class="sourceLineNo">130</span><a id="line.130">        {</a>
-<span class="sourceLineNo">131</span><a id="line.131">                try </a>
-<span class="sourceLineNo">132</span><a id="line.132">                {</a>
-<span class="sourceLineNo">133</span><a id="line.133">                        Object instance = pollInstance(className, params, signature);</a>
-<span class="sourceLineNo">134</span><a id="line.134">                        return instance == null ? getFactory().getInstance(className, params, signature) : instance;</a>
-<span class="sourceLineNo">135</span><a id="line.135">                } </a>
-<span class="sourceLineNo">136</span><a id="line.136">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">137</span><a id="line.137">                {</a>
-<span class="sourceLineNo">138</span><a id="line.138">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">139</span><a id="line.139">                }</a>
-<span class="sourceLineNo">140</span><a id="line.140">        }</a>
-<span class="sourceLineNo">141</span><a id="line.141"></a>
-<span class="sourceLineNo">142</span><a id="line.142">        /**</a>
-<span class="sourceLineNo">143</span><a id="line.143">         * Gets an instance of a named class either from the pool or by calling the</a>
-<span class="sourceLineNo">144</span><a id="line.144">         * Factory Service if the pool is empty. Parameters for its constructor are</a>
-<span class="sourceLineNo">145</span><a id="line.145">         * given as an array of objects, primitive types must be wrapped with a</a>
-<span class="sourceLineNo">146</span><a id="line.146">         * corresponding class. The specified class loader will be passed to the Factory</a>
-<span class="sourceLineNo">147</span><a id="line.147">         * Service.</a>
-<span class="sourceLineNo">148</span><a id="line.148">         *</a>
-<span class="sourceLineNo">149</span><a id="line.149">         * @param className the name of the class.</a>
-<span class="sourceLineNo">150</span><a id="line.150">         * @param loader    the class loader.</a>
-<span class="sourceLineNo">151</span><a id="line.151">         * @param params    an array containing the parameters of the constructor.</a>
-<span class="sourceLineNo">152</span><a id="line.152">         * @param signature an array containing the signature of the constructor.</a>
-<span class="sourceLineNo">153</span><a id="line.153">         * @return the instance.</a>
-<span class="sourceLineNo">154</span><a id="line.154">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">155</span><a id="line.155">         */</a>
-<span class="sourceLineNo">156</span><a id="line.156">        public Object getInstance(String className, ClassLoader loader, Object[] params, String[] signature)</a>
-<span class="sourceLineNo">157</span><a id="line.157">                        throws PoolException </a>
-<span class="sourceLineNo">158</span><a id="line.158">        {</a>
-<span class="sourceLineNo">159</span><a id="line.159">                try </a>
-<span class="sourceLineNo">160</span><a id="line.160">                {</a>
-<span class="sourceLineNo">161</span><a id="line.161">                        Object instance = pollInstance(className, params, signature);</a>
-<span class="sourceLineNo">162</span><a id="line.162">                        return instance == null ? getFactory().getInstance(className, loader, params, signature) : instance;</a>
-<span class="sourceLineNo">163</span><a id="line.163">                } </a>
-<span class="sourceLineNo">164</span><a id="line.164">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">165</span><a id="line.165">                {</a>
-<span class="sourceLineNo">166</span><a id="line.166">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">167</span><a id="line.167">                }</a>
-<span class="sourceLineNo">168</span><a id="line.168">        }</a>
-<span class="sourceLineNo">169</span><a id="line.169"></a>
-<span class="sourceLineNo">170</span><a id="line.170">        /**</a>
-<span class="sourceLineNo">171</span><a id="line.171">         * Tests if specified class loaders are supported for a named class.</a>
-<span class="sourceLineNo">172</span><a id="line.172">         *</a>
-<span class="sourceLineNo">173</span><a id="line.173">         * @param className the name of the class.</a>
-<span class="sourceLineNo">174</span><a id="line.174">         * @return true if class loaders are supported, false otherwise.</a>
-<span class="sourceLineNo">175</span><a id="line.175">         * @throws FactoryException if test fails.</a>
-<span class="sourceLineNo">176</span><a id="line.176">         */</a>
-<span class="sourceLineNo">177</span><a id="line.177">        public boolean isLoaderSupported(String className) throws FactoryException </a>
-<span class="sourceLineNo">178</span><a id="line.178">        {</a>
-<span class="sourceLineNo">179</span><a id="line.179">                return getFactory().isLoaderSupported(className);</a>
-<span class="sourceLineNo">180</span><a id="line.180">        }</a>
-<span class="sourceLineNo">181</span><a id="line.181"></a>
-<span class="sourceLineNo">182</span><a id="line.182">        /**</a>
-<span class="sourceLineNo">183</span><a id="line.183">         * Gets an instance of a specified class either from the pool or by instatiating</a>
-<span class="sourceLineNo">184</span><a id="line.184">         * from the class if the pool is empty.</a>
-<span class="sourceLineNo">185</span><a id="line.185">         *</a>
-<span class="sourceLineNo">186</span><a id="line.186">         * @param &lt;T&gt; type of the class</a>
-<span class="sourceLineNo">187</span><a id="line.187">         * @param clazz the class.</a>
-<span class="sourceLineNo">188</span><a id="line.188">         * @return the instance.</a>
-<span class="sourceLineNo">189</span><a id="line.189">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">190</span><a id="line.190">         */</a>
-<span class="sourceLineNo">191</span><a id="line.191">        @SuppressWarnings("unchecked")</a>
-<span class="sourceLineNo">192</span><a id="line.192">        public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz) throws PoolException </a>
-<span class="sourceLineNo">193</span><a id="line.193">        {</a>
-<span class="sourceLineNo">194</span><a id="line.194">                try </a>
-<span class="sourceLineNo">195</span><a id="line.195">                {</a>
-<span class="sourceLineNo">196</span><a id="line.196">                        T instance = pollInstance(clazz.getName(), null, null);</a>
-<span class="sourceLineNo">197</span><a id="line.197">                        return instance == null ? (T) factoryService.getInstance(clazz) : instance;</a>
-<span class="sourceLineNo">198</span><a id="line.198">                } </a>
-<span class="sourceLineNo">199</span><a id="line.199">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">200</span><a id="line.200">                {</a>
-<span class="sourceLineNo">201</span><a id="line.201">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">202</span><a id="line.202">                }</a>
-<span class="sourceLineNo">203</span><a id="line.203">        }</a>
-<span class="sourceLineNo">204</span><a id="line.204"></a>
-<span class="sourceLineNo">205</span><a id="line.205">        /**</a>
-<span class="sourceLineNo">206</span><a id="line.206">         * Gets an instance of a specified class either from the pool or by instatiating</a>
-<span class="sourceLineNo">207</span><a id="line.207">         * from the class if the pool is empty.</a>
-<span class="sourceLineNo">208</span><a id="line.208">         *</a>
-<span class="sourceLineNo">209</span><a id="line.209">         * @param clazz     the class.</a>
-<span class="sourceLineNo">210</span><a id="line.210">         * @param params    an array containing the parameters of the constructor.</a>
-<span class="sourceLineNo">211</span><a id="line.211">         * @param signature an array containing the signature of the constructor.</a>
-<span class="sourceLineNo">212</span><a id="line.212">         * @return the instance.</a>
-<span class="sourceLineNo">213</span><a id="line.213">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">214</span><a id="line.214">         */</a>
-<span class="sourceLineNo">215</span><a id="line.215">        public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz, Object params[], String signature[]) throws PoolException </a>
-<span class="sourceLineNo">216</span><a id="line.216">        {</a>
-<span class="sourceLineNo">217</span><a id="line.217">                try </a>
-<span class="sourceLineNo">218</span><a id="line.218">                {</a>
-<span class="sourceLineNo">219</span><a id="line.219">                        T instance = pollInstance(clazz.getName(), params, signature);</a>
-<span class="sourceLineNo">220</span><a id="line.220">                        </a>
-<span class="sourceLineNo">221</span><a id="line.221">                        // TODO There is a whacky .toString() on the clazz object, </a>
-<span class="sourceLineNo">222</span><a id="line.222">                        // but otherwise it won't compile</a>
-<span class="sourceLineNo">223</span><a id="line.223">                        return instance == null ? getFactory().getInstance(clazz.toString(), params, signature) : instance;</a>
-<span class="sourceLineNo">224</span><a id="line.224">                        </a>
-<span class="sourceLineNo">225</span><a id="line.225">                } </a>
-<span class="sourceLineNo">226</span><a id="line.226">                catch (FactoryException fe) </a>
-<span class="sourceLineNo">227</span><a id="line.227">                {</a>
-<span class="sourceLineNo">228</span><a id="line.228">                        throw new PoolException(fe);</a>
-<span class="sourceLineNo">229</span><a id="line.229">                }</a>
-<span class="sourceLineNo">230</span><a id="line.230">        }</a>
-<span class="sourceLineNo">231</span><a id="line.231"></a>
-<span class="sourceLineNo">232</span><a id="line.232">        /**</a>
-<span class="sourceLineNo">233</span><a id="line.233">         * Puts a used object back to the pool. Objects implementing the Recyclable</a>
-<span class="sourceLineNo">234</span><a id="line.234">         * interface can provide a recycle method to be called when they are reused and</a>
-<span class="sourceLineNo">235</span><a id="line.235">         * a dispose method to be called when they are returned to the pool.</a>
-<span class="sourceLineNo">236</span><a id="line.236">         *</a>
-<span class="sourceLineNo">237</span><a id="line.237">         * @param instance the object instance to recycle.</a>
-<span class="sourceLineNo">238</span><a id="line.238">         * @return true if the instance was accepted.</a>
-<span class="sourceLineNo">239</span><a id="line.239">         */</a>
-<span class="sourceLineNo">240</span><a id="line.240">        @SuppressWarnings("unchecked")</a>
-<span class="sourceLineNo">241</span><a id="line.241">        public boolean putInstance(Object instance) </a>
-<span class="sourceLineNo">242</span><a id="line.242">        {</a>
-<span class="sourceLineNo">243</span><a id="line.243">                if (instance != null) </a>
-<span class="sourceLineNo">244</span><a id="line.244">                {</a>
-<span class="sourceLineNo">245</span><a id="line.245">                        HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</a>
-<span class="sourceLineNo">246</span><a id="line.246">                        String className = instance.getClass().getName();</a>
-<span class="sourceLineNo">247</span><a id="line.247">                        PoolBuffer pool = (PoolBuffer) repository.get(className);</a>
-<span class="sourceLineNo">248</span><a id="line.248">                        if (pool == null) </a>
-<span class="sourceLineNo">249</span><a id="line.249">                        {</a>
-<span class="sourceLineNo">250</span><a id="line.250">                                pool = new PoolBuffer(getCapacity(className));</a>
-<span class="sourceLineNo">251</span><a id="line.251">                                repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();</a>
-<span class="sourceLineNo">252</span><a id="line.252">                                repository.put(className, pool);</a>
-<span class="sourceLineNo">253</span><a id="line.253">                                poolRepository = repository;</a>
-<span class="sourceLineNo">254</span><a id="line.254">                                if (instance instanceof ArrayCtorRecyclable) </a>
-<span class="sourceLineNo">255</span><a id="line.255">                                {</a>
-<span class="sourceLineNo">256</span><a id="line.256">                                        pool.setArrayCtorRecyclable(true);</a>
-<span class="sourceLineNo">257</span><a id="line.257">                                }</a>
-<span class="sourceLineNo">258</span><a id="line.258">                        }</a>
-<span class="sourceLineNo">259</span><a id="line.259">                        return pool.offer(instance);</a>
-<span class="sourceLineNo">260</span><a id="line.260">                } else {</a>
-<span class="sourceLineNo">261</span><a id="line.261">                        return false;</a>
-<span class="sourceLineNo">262</span><a id="line.262">                }</a>
-<span class="sourceLineNo">263</span><a id="line.263">        }</a>
-<span class="sourceLineNo">264</span><a id="line.264"></a>
-<span class="sourceLineNo">265</span><a id="line.265">        /**</a>
-<span class="sourceLineNo">266</span><a id="line.266">         * Gets the capacity of the pool for a named class.</a>
-<span class="sourceLineNo">267</span><a id="line.267">         *</a>
-<span class="sourceLineNo">268</span><a id="line.268">         * @param className the name of the class.</a>
-<span class="sourceLineNo">269</span><a id="line.269">         */</a>
-<span class="sourceLineNo">270</span><a id="line.270">        public int getCapacity(String className) </a>
-<span class="sourceLineNo">271</span><a id="line.271">        {</a>
-<span class="sourceLineNo">272</span><a id="line.272">                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</a>
-<span class="sourceLineNo">273</span><a id="line.273">                if (pool == null) </a>
-<span class="sourceLineNo">274</span><a id="line.274">                {</a>
-<span class="sourceLineNo">275</span><a id="line.275">                        /* Check class specific capacity. */</a>
-<span class="sourceLineNo">276</span><a id="line.276">                        int capacity = poolCapacity;</a>
-<span class="sourceLineNo">277</span><a id="line.277">                        if (capacityMap != null) </a>
-<span class="sourceLineNo">278</span><a id="line.278">                        {</a>
-<span class="sourceLineNo">279</span><a id="line.279">                                Integer cap = (Integer) capacityMap.get(className);</a>
-<span class="sourceLineNo">280</span><a id="line.280">                                if (cap != null) </a>
-<span class="sourceLineNo">281</span><a id="line.281">                                {</a>
-<span class="sourceLineNo">282</span><a id="line.282">                                        capacity = cap.intValue();</a>
-<span class="sourceLineNo">283</span><a id="line.283">                                }</a>
-<span class="sourceLineNo">284</span><a id="line.284">                        }</a>
-<span class="sourceLineNo">285</span><a id="line.285">                        return capacity;</a>
-<span class="sourceLineNo">286</span><a id="line.286">                } else {</a>
-<span class="sourceLineNo">287</span><a id="line.287">                        return pool.capacity();</a>
-<span class="sourceLineNo">288</span><a id="line.288">                }</a>
-<span class="sourceLineNo">289</span><a id="line.289">        }</a>
-<span class="sourceLineNo">290</span><a id="line.290"></a>
-<span class="sourceLineNo">291</span><a id="line.291">        /**</a>
-<span class="sourceLineNo">292</span><a id="line.292">         * Sets the capacity of the pool for a named class. Note that the pool will be</a>
-<span class="sourceLineNo">293</span><a id="line.293">         * cleared after the change.</a>
-<span class="sourceLineNo">294</span><a id="line.294">         *</a>
-<span class="sourceLineNo">295</span><a id="line.295">         * @param className the name of the class.</a>
-<span class="sourceLineNo">296</span><a id="line.296">         * @param capacity  the new capacity.</a>
-<span class="sourceLineNo">297</span><a id="line.297">         */</a>
-<span class="sourceLineNo">298</span><a id="line.298">        @SuppressWarnings("unchecked")</a>
-<span class="sourceLineNo">299</span><a id="line.299">        public void setCapacity(String className, int capacity) </a>
-<span class="sourceLineNo">300</span><a id="line.300">        {</a>
-<span class="sourceLineNo">301</span><a id="line.301">                HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</a>
-<span class="sourceLineNo">302</span><a id="line.302">                repository = repository != null ? (HashMap&lt;String, PoolBuffer&gt;) repository.clone()</a>
-<span class="sourceLineNo">303</span><a id="line.303">                                : new HashMap&lt;String, PoolBuffer&gt;();</a>
-<span class="sourceLineNo">304</span><a id="line.304">                repository.put(className, new PoolBuffer(capacity));</a>
-<span class="sourceLineNo">305</span><a id="line.305">                poolRepository = repository;</a>
-<span class="sourceLineNo">306</span><a id="line.306">        }</a>
-<span class="sourceLineNo">307</span><a id="line.307"></a>
-<span class="sourceLineNo">308</span><a id="line.308">        /**</a>
-<span class="sourceLineNo">309</span><a id="line.309">         * Gets the current size of the pool for a named class.</a>
-<span class="sourceLineNo">310</span><a id="line.310">         *</a>
-<span class="sourceLineNo">311</span><a id="line.311">         * @param className the name of the class.</a>
-<span class="sourceLineNo">312</span><a id="line.312">         */</a>
-<span class="sourceLineNo">313</span><a id="line.313">        public int getSize(String className) </a>
-<span class="sourceLineNo">314</span><a id="line.314">        {</a>
-<span class="sourceLineNo">315</span><a id="line.315">                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</a>
-<span class="sourceLineNo">316</span><a id="line.316">                return pool != null ? pool.size() : 0;</a>
-<span class="sourceLineNo">317</span><a id="line.317">        }</a>
-<span class="sourceLineNo">318</span><a id="line.318"></a>
-<span class="sourceLineNo">319</span><a id="line.319">        /**</a>
-<span class="sourceLineNo">320</span><a id="line.320">         * Clears instances of a named class from the pool.</a>
-<span class="sourceLineNo">321</span><a id="line.321">         *</a>
-<span class="sourceLineNo">322</span><a id="line.322">         * @param className the name of the class.</a>
-<span class="sourceLineNo">323</span><a id="line.323">         */</a>
-<span class="sourceLineNo">324</span><a id="line.324">        @SuppressWarnings("unchecked")</a>
-<span class="sourceLineNo">325</span><a id="line.325">        public void clearPool(String className) </a>
-<span class="sourceLineNo">326</span><a id="line.326">        {</a>
-<span class="sourceLineNo">327</span><a id="line.327">                HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;</a>
-<span class="sourceLineNo">328</span><a id="line.328">                if (repository.get(className) != null) </a>
-<span class="sourceLineNo">329</span><a id="line.329">                {</a>
-<span class="sourceLineNo">330</span><a id="line.330">                        repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();</a>
-<span class="sourceLineNo">331</span><a id="line.331">                        repository.remove(className);</a>
-<span class="sourceLineNo">332</span><a id="line.332">                        poolRepository = repository;</a>
-<span class="sourceLineNo">333</span><a id="line.333">                }</a>
-<span class="sourceLineNo">334</span><a id="line.334">        }</a>
-<span class="sourceLineNo">335</span><a id="line.335"></a>
-<span class="sourceLineNo">336</span><a id="line.336">        /**</a>
-<span class="sourceLineNo">337</span><a id="line.337">         * Clears all instances from the pool.</a>
-<span class="sourceLineNo">338</span><a id="line.338">         */</a>
-<span class="sourceLineNo">339</span><a id="line.339">        public void clearPool() </a>
-<span class="sourceLineNo">340</span><a id="line.340">        {</a>
-<span class="sourceLineNo">341</span><a id="line.341">                poolRepository = new HashMap&lt;String, PoolBuffer&gt;();</a>
-<span class="sourceLineNo">342</span><a id="line.342">        }</a>
-<span class="sourceLineNo">343</span><a id="line.343"></a>
-<span class="sourceLineNo">344</span><a id="line.344">        /**</a>
-<span class="sourceLineNo">345</span><a id="line.345">         * Polls and recycles an object of the named class from the pool.</a>
-<span class="sourceLineNo">346</span><a id="line.346">         *</a>
-<span class="sourceLineNo">347</span><a id="line.347">         * @param className the name of the class.</a>
-<span class="sourceLineNo">348</span><a id="line.348">         * @param params    an array containing the parameters of the constructor.</a>
-<span class="sourceLineNo">349</span><a id="line.349">         * @param signature an array containing the signature of the constructor.</a>
-<span class="sourceLineNo">350</span><a id="line.350">         * @return the object or null.</a>
-<span class="sourceLineNo">351</span><a id="line.351">         * @throws PoolException if recycling fails.</a>
-<span class="sourceLineNo">352</span><a id="line.352">         */</a>
-<span class="sourceLineNo">353</span><a id="line.353">        private &lt;T&gt; T pollInstance(String className, Object[] params, String[] signature) throws PoolException </a>
-<span class="sourceLineNo">354</span><a id="line.354">        {</a>
-<span class="sourceLineNo">355</span><a id="line.355">                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);</a>
-<span class="sourceLineNo">356</span><a id="line.356">                return pool != null ? pool.poll(params, signature, factoryService) : null;</a>
-<span class="sourceLineNo">357</span><a id="line.357">        }</a>
-<span class="sourceLineNo">358</span><a id="line.358"></a>
-<span class="sourceLineNo">359</span><a id="line.359">        /**</a>
-<span class="sourceLineNo">360</span><a id="line.360">         * Gets the factory service.</a>
-<span class="sourceLineNo">361</span><a id="line.361">         *</a>
-<span class="sourceLineNo">362</span><a id="line.362">         * @return the factory service.</a>
-<span class="sourceLineNo">363</span><a id="line.363">         */</a>
-<span class="sourceLineNo">364</span><a id="line.364">        protected FactoryService getFactory() </a>
-<span class="sourceLineNo">365</span><a id="line.365">        {</a>
-<span class="sourceLineNo">366</span><a id="line.366">                return factoryService;</a>
-<span class="sourceLineNo">367</span><a id="line.367">        }</a>
-<span class="sourceLineNo">368</span><a id="line.368"></a>
-<span class="sourceLineNo">369</span><a id="line.369">        // ---------------- Avalon Lifecycle Methods ---------------------</a>
-<span class="sourceLineNo">370</span><a id="line.370">        /* (non-Javadoc)</a>
-<span class="sourceLineNo">371</span><a id="line.371">         * Avalon component lifecycle method</a>
-<span class="sourceLineNo">372</span><a id="line.372">         * @see org.apache.avalon.framework.configuration.Configurable#configure(org.apache.avalon.framework.configuration.Configuration)</a>
-<span class="sourceLineNo">373</span><a id="line.373">         */</a>
-<span class="sourceLineNo">374</span><a id="line.374">        public void configure(Configuration conf) </a>
-<span class="sourceLineNo">375</span><a id="line.375">        {</a>
-<span class="sourceLineNo">376</span><a id="line.376">                final Configuration capacities = conf.getChild(POOL_CAPACITY, false);</a>
-<span class="sourceLineNo">377</span><a id="line.377">                if (capacities != null) </a>
-<span class="sourceLineNo">378</span><a id="line.378">                {</a>
-<span class="sourceLineNo">379</span><a id="line.379">                        Configuration defaultConf = capacities.getChild("default");</a>
-<span class="sourceLineNo">380</span><a id="line.380">                        int capacity = defaultConf.getValueAsInteger(DEFAULT_POOL_CAPACITY);</a>
-<span class="sourceLineNo">381</span><a id="line.381">                        if (capacity &lt;= 0) </a>
-<span class="sourceLineNo">382</span><a id="line.382">                        {</a>
-<span class="sourceLineNo">383</span><a id="line.383">                                throw new IllegalArgumentException("Capacity must be &gt;0");</a>
-<span class="sourceLineNo">384</span><a id="line.384">                        }</a>
-<span class="sourceLineNo">385</span><a id="line.385">                        poolCapacity = capacity;</a>
-<span class="sourceLineNo">386</span><a id="line.386">                        Configuration[] nameVal = capacities.getChildren();</a>
-<span class="sourceLineNo">387</span><a id="line.387">                        for (int i = 0; i &lt; nameVal.length; i++) </a>
-<span class="sourceLineNo">388</span><a id="line.388">                        {</a>
-<span class="sourceLineNo">389</span><a id="line.389">                                String key = nameVal[i].getName();</a>
-<span class="sourceLineNo">390</span><a id="line.390">                                if (!"default".equals(key)) </a>
-<span class="sourceLineNo">391</span><a id="line.391">                                {</a>
-<span class="sourceLineNo">392</span><a id="line.392">                                        capacity = nameVal[i].getValueAsInteger(poolCapacity);</a>
-<span class="sourceLineNo">393</span><a id="line.393">                                        if (capacity &lt; 0) </a>
-<span class="sourceLineNo">394</span><a id="line.394">                                        {</a>
-<span class="sourceLineNo">395</span><a id="line.395">                                                capacity = poolCapacity;</a>
-<span class="sourceLineNo">396</span><a id="line.396">                                        }</a>
-<span class="sourceLineNo">397</span><a id="line.397">                                        </a>
-<span class="sourceLineNo">398</span><a id="line.398">                                        if (capacityMap == null) </a>
-<span class="sourceLineNo">399</span><a id="line.399">                                        {</a>
-<span class="sourceLineNo">400</span><a id="line.400">                                                capacityMap = new HashMap&lt;String, Integer&gt;();</a>
-<span class="sourceLineNo">401</span><a id="line.401">                                        }</a>
-<span class="sourceLineNo">402</span><a id="line.402">                                        </a>
-<span class="sourceLineNo">403</span><a id="line.403">                                        capacityMap.put(key, capacity);</a>
-<span class="sourceLineNo">404</span><a id="line.404">                                }</a>
-<span class="sourceLineNo">405</span><a id="line.405">                        }</a>
-<span class="sourceLineNo">406</span><a id="line.406">                }</a>
-<span class="sourceLineNo">407</span><a id="line.407">        }</a>
-<span class="sourceLineNo">408</span><a id="line.408"></a>
-<span class="sourceLineNo">409</span><a id="line.409">        /**</a>
-<span class="sourceLineNo">410</span><a id="line.410">         * Avalon component lifecycle method</a>
-<span class="sourceLineNo">411</span><a id="line.411">         * </a>
-<span class="sourceLineNo">412</span><a id="line.412">         * {@link org.apache.fulcrum.factory.FactoryService}</a>
-<span class="sourceLineNo">413</span><a id="line.413">         * </a>
-<span class="sourceLineNo">414</span><a id="line.414">         * @param manager the service manager</a>
-<span class="sourceLineNo">415</span><a id="line.415">         */</a>
-<span class="sourceLineNo">416</span><a id="line.416">        public void service(ServiceManager manager) </a>
-<span class="sourceLineNo">417</span><a id="line.417">        {</a>
-<span class="sourceLineNo">418</span><a id="line.418">                this.manager = manager;</a>
-<span class="sourceLineNo">419</span><a id="line.419">        }</a>
-<span class="sourceLineNo">420</span><a id="line.420"></a>
-<span class="sourceLineNo">421</span><a id="line.421">        /**</a>
-<span class="sourceLineNo">422</span><a id="line.422">         * Avalon component lifecycle method Initializes the service by loading default</a>
-<span class="sourceLineNo">423</span><a id="line.423">         * class loaders and customized object factories.</a>
-<span class="sourceLineNo">424</span><a id="line.424">         *</a>
-<span class="sourceLineNo">425</span><a id="line.425">         * @throws Exception if initialization fails.</a>
-<span class="sourceLineNo">426</span><a id="line.426">         */</a>
-<span class="sourceLineNo">427</span><a id="line.427">        public void initialize() throws Exception </a>
-<span class="sourceLineNo">428</span><a id="line.428">        {</a>
-<span class="sourceLineNo">429</span><a id="line.429">                try </a>
-<span class="sourceLineNo">430</span><a id="line.430">                {</a>
-<span class="sourceLineNo">431</span><a id="line.431">                        factoryService = (FactoryService) manager.lookup(FactoryService.ROLE);</a>
-<span class="sourceLineNo">432</span><a id="line.432">                } </a>
-<span class="sourceLineNo">433</span><a id="line.433">                catch (Exception e) </a>
-<span class="sourceLineNo">434</span><a id="line.434">                {</a>
-<span class="sourceLineNo">435</span><a id="line.435">                        throw new Exception("DefaultPoolService.initialize: Failed to get a Factory object", e);</a>
-<span class="sourceLineNo">436</span><a id="line.436">                }</a>
-<span class="sourceLineNo">437</span><a id="line.437">        }</a>
-<span class="sourceLineNo">438</span><a id="line.438"></a>
-<span class="sourceLineNo">439</span><a id="line.439">        /**</a>
-<span class="sourceLineNo">440</span><a id="line.440">         * Avalon component lifecycle method</a>
-<span class="sourceLineNo">441</span><a id="line.441">         */</a>
-<span class="sourceLineNo">442</span><a id="line.442">        public void dispose() </a>
-<span class="sourceLineNo">443</span><a id="line.443">        {</a>
-<span class="sourceLineNo">444</span><a id="line.444">                if (factoryService != null) </a>
-<span class="sourceLineNo">445</span><a id="line.445">                {</a>
-<span class="sourceLineNo">446</span><a id="line.446">                        manager.release(factoryService);</a>
-<span class="sourceLineNo">447</span><a id="line.447">                }</a>
-<span class="sourceLineNo">448</span><a id="line.448">                factoryService = null;</a>
-<span class="sourceLineNo">449</span><a id="line.449">                manager = null;</a>
-<span class="sourceLineNo">450</span><a id="line.450">        }</a>
-<span class="sourceLineNo">451</span><a id="line.451">}</a>
+<pre><span class="sourceLineNo">001</span>package org.apache.fulcrum.pool;<a name="line.1"></a>
+<span class="sourceLineNo">002</span><a name="line.2"></a>
+<span class="sourceLineNo">003</span>import java.util.HashMap;<a name="line.3"></a>
+<span class="sourceLineNo">004</span><a name="line.4"></a>
+<span class="sourceLineNo">005</span>/*<a name="line.5"></a>
+<span class="sourceLineNo">006</span> * Licensed to the Apache Software Foundation (ASF) under one<a name="line.6"></a>
+<span class="sourceLineNo">007</span> * or more contributor license agreements.  See the NOTICE file<a name="line.7"></a>
+<span class="sourceLineNo">008</span> * distributed with this work for additional information<a name="line.8"></a>
+<span class="sourceLineNo">009</span> * regarding copyright ownership.  The ASF licenses this file<a name="line.9"></a>
+<span class="sourceLineNo">010</span> * to you under the Apache License, Version 2.0 (the<a name="line.10"></a>
+<span class="sourceLineNo">011</span> * "License"); you may not use this file except in compliance<a name="line.11"></a>
+<span class="sourceLineNo">012</span> * with the License.  You may obtain a copy of the License at<a name="line.12"></a>
+<span class="sourceLineNo">013</span> *<a name="line.13"></a>
+<span class="sourceLineNo">014</span> *   http://www.apache.org/licenses/LICENSE-2.0<a name="line.14"></a>
+<span class="sourceLineNo">015</span> *<a name="line.15"></a>
+<span class="sourceLineNo">016</span> * Unless required by applicable law or agreed to in writing,<a name="line.16"></a>
+<span class="sourceLineNo">017</span> * software distributed under the License is distributed on an<a name="line.17"></a>
+<span class="sourceLineNo">018</span> * "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY<a name="line.18"></a>
+<span class="sourceLineNo">019</span> * KIND, either express or implied.  See the License for the<a name="line.19"></a>
+<span class="sourceLineNo">020</span> * specific language governing permissions and limitations<a name="line.20"></a>
+<span class="sourceLineNo">021</span> * under the License.<a name="line.21"></a>
+<span class="sourceLineNo">022</span> */<a name="line.22"></a>
+<span class="sourceLineNo">023</span><a name="line.23"></a>
+<span class="sourceLineNo">024</span>import java.util.Map;<a name="line.24"></a>
+<span class="sourceLineNo">025</span><a name="line.25"></a>
+<span class="sourceLineNo">026</span>import org.apache.avalon.framework.activity.Disposable;<a name="line.26"></a>
+<span class="sourceLineNo">027</span>import org.apache.avalon.framework.activity.Initializable;<a name="line.27"></a>
+<span class="sourceLineNo">028</span>import org.apache.avalon.framework.configuration.Configurable;<a name="line.28"></a>
+<span class="sourceLineNo">029</span>import org.apache.avalon.framework.configuration.Configuration;<a name="line.29"></a>
+<span class="sourceLineNo">030</span>import org.apache.avalon.framework.logger.AbstractLogEnabled;<a name="line.30"></a>
+<span class="sourceLineNo">031</span>import org.apache.avalon.framework.service.ServiceManager;<a name="line.31"></a>
+<span class="sourceLineNo">032</span>import org.apache.avalon.framework.service.Serviceable;<a name="line.32"></a>
+<span class="sourceLineNo">033</span>import org.apache.fulcrum.factory.FactoryException;<a name="line.33"></a>
+<span class="sourceLineNo">034</span>import org.apache.fulcrum.factory.FactoryService;<a name="line.34"></a>
+<span class="sourceLineNo">035</span><a name="line.35"></a>
+<span class="sourceLineNo">036</span>/**<a name="line.36"></a>
+<span class="sourceLineNo">037</span> * The Pool Service extends the Factory Service by adding support for pooling<a name="line.37"></a>
+<span class="sourceLineNo">038</span> * instantiated objects. When a new instance is requested, the service first<a name="line.38"></a>
+<span class="sourceLineNo">039</span> * checks its pool if one is available. If the the pool is empty, a new instance<a name="line.39"></a>
+<span class="sourceLineNo">040</span> * will be requested from the FactoryService.<a name="line.40"></a>
+<span class="sourceLineNo">041</span> *<a name="line.41"></a>
+<span class="sourceLineNo">042</span> * For objects implementing the Recyclable interface, a recycle method will be<a name="line.42"></a>
+<span class="sourceLineNo">043</span> * called, when they taken from the pool, and a dispose method, when they are<a name="line.43"></a>
+<span class="sourceLineNo">044</span> * returned to the pool.<a name="line.44"></a>
+<span class="sourceLineNo">045</span> *<a name="line.45"></a>
+<span class="sourceLineNo">046</span> * @author &lt;a href="mailto:ilkka.priha@simsoft.fi"&gt;Ilkka Priha&lt;/a&gt;<a name="line.46"></a>
+<span class="sourceLineNo">047</span> * @author &lt;a href="mailto:mcconnell@apache.org"&gt;Stephen McConnell&lt;/a&gt;<a name="line.47"></a>
+<span class="sourceLineNo">048</span> * @version $Id$<a name="line.48"></a>
+<span class="sourceLineNo">049</span> *<a name="line.49"></a>
+<span class="sourceLineNo">050</span> * avalon.component name="pool" lifestyle="transient"<a name="line.50"></a>
+<span class="sourceLineNo">051</span> * avalon.service type="org.apache.fulcrum.pool.PoolService"<a name="line.51"></a>
+<span class="sourceLineNo">052</span> */<a name="line.52"></a>
+<span class="sourceLineNo">053</span>public class DefaultPoolService extends AbstractLogEnabled<a name="line.53"></a>
+<span class="sourceLineNo">054</span>                implements PoolService, Serviceable, Disposable, Initializable, Configurable {<a name="line.54"></a>
+<span class="sourceLineNo">055</span>        /**<a name="line.55"></a>
+<span class="sourceLineNo">056</span>         * The property specifying the pool capacity.<a name="line.56"></a>
+<span class="sourceLineNo">057</span>         */<a name="line.57"></a>
+<span class="sourceLineNo">058</span>        public static final String POOL_CAPACITY = "capacity";<a name="line.58"></a>
+<span class="sourceLineNo">059</span>        <a name="line.59"></a>
+<span class="sourceLineNo">060</span>        /**<a name="line.60"></a>
+<span class="sourceLineNo">061</span>         * The default capacity of pools.<a name="line.61"></a>
+<span class="sourceLineNo">062</span>         */<a name="line.62"></a>
+<span class="sourceLineNo">063</span>        private int poolCapacity = DEFAULT_POOL_CAPACITY;<a name="line.63"></a>
+<span class="sourceLineNo">064</span>        <a name="line.64"></a>
+<span class="sourceLineNo">065</span>        /**<a name="line.65"></a>
+<span class="sourceLineNo">066</span>         * The pool repository, one pool for each class.<a name="line.66"></a>
+<span class="sourceLineNo">067</span>         */<a name="line.67"></a>
+<span class="sourceLineNo">068</span>        private HashMap&lt;String, PoolBuffer&gt; poolRepository = new HashMap&lt;&gt;();<a name="line.68"></a>
+<span class="sourceLineNo">069</span>        private Map&lt;String, Integer&gt; capacityMap;<a name="line.69"></a>
+<span class="sourceLineNo">070</span>        private FactoryService factoryService;<a name="line.70"></a>
+<span class="sourceLineNo">071</span>        private ServiceManager manager;<a name="line.71"></a>
+<span class="sourceLineNo">072</span><a name="line.72"></a>
+<span class="sourceLineNo">073</span>        /**<a name="line.73"></a>
+<span class="sourceLineNo">074</span>         * Gets an instance of a named class either from the pool or by calling the<a name="line.74"></a>
+<span class="sourceLineNo">075</span>         * Factory Service if the pool is empty.<a name="line.75"></a>
+<span class="sourceLineNo">076</span>         *<a name="line.76"></a>
+<span class="sourceLineNo">077</span>         * @param className the name of the class.<a name="line.77"></a>
+<span class="sourceLineNo">078</span>         * @return the instance.<a name="line.78"></a>
+<span class="sourceLineNo">079</span>         * @throws PoolException if recycling fails.<a name="line.79"></a>
+<span class="sourceLineNo">080</span>         */<a name="line.80"></a>
+<span class="sourceLineNo">081</span>        public &lt;T&gt; T getInstance(String className) throws PoolException <a name="line.81"></a>
+<span class="sourceLineNo">082</span>        {<a name="line.82"></a>
+<span class="sourceLineNo">083</span>                try <a name="line.83"></a>
+<span class="sourceLineNo">084</span>                {<a name="line.84"></a>
+<span class="sourceLineNo">085</span>                        T instance = pollInstance(className, null, null);<a name="line.85"></a>
+<span class="sourceLineNo">086</span>                        return instance == null ? getFactory().getInstance(className) : instance;<a name="line.86"></a>
+<span class="sourceLineNo">087</span>                } <a name="line.87"></a>
+<span class="sourceLineNo">088</span>                catch (FactoryException fe) <a name="line.88"></a>
+<span class="sourceLineNo">089</span>                {<a name="line.89"></a>
+<span class="sourceLineNo">090</span>                        throw new PoolException(fe);<a name="line.90"></a>
+<span class="sourceLineNo">091</span>                }<a name="line.91"></a>
+<span class="sourceLineNo">092</span>        }<a name="line.92"></a>
+<span class="sourceLineNo">093</span><a name="line.93"></a>
+<span class="sourceLineNo">094</span>        /**<a name="line.94"></a>
+<span class="sourceLineNo">095</span>         * Gets an instance of a named class either from the pool or by calling the<a name="line.95"></a>
+<span class="sourceLineNo">096</span>         * Factory Service if the pool is empty. The specified class loader will be<a name="line.96"></a>
+<span class="sourceLineNo">097</span>         * passed to the Factory Service.<a name="line.97"></a>
+<span class="sourceLineNo">098</span>         *<a name="line.98"></a>
+<span class="sourceLineNo">099</span>         * @param className the name of the class.<a name="line.99"></a>
+<span class="sourceLineNo">100</span>         * @param loader    the class loader.<a name="line.100"></a>
+<span class="sourceLineNo">101</span>         * @return the instance.<a name="line.101"></a>
+<span class="sourceLineNo">102</span>         * @throws PoolException if recycling fails.<a name="line.102"></a>
+<span class="sourceLineNo">103</span>         */<a name="line.103"></a>
+<span class="sourceLineNo">104</span>        public Object getInstance(String className, ClassLoader loader) throws PoolException <a name="line.104"></a>
+<span class="sourceLineNo">105</span>        {<a name="line.105"></a>
+<span class="sourceLineNo">106</span>                try <a name="line.106"></a>
+<span class="sourceLineNo">107</span>                {<a name="line.107"></a>
+<span class="sourceLineNo">108</span>                        Object instance = pollInstance(className, null, null);<a name="line.108"></a>
+<span class="sourceLineNo">109</span>                        return instance == null ? getFactory().getInstance(className, loader) : instance;<a name="line.109"></a>
+<span class="sourceLineNo">110</span>                } <a name="line.110"></a>
+<span class="sourceLineNo">111</span>                catch (FactoryException fe) <a name="line.111"></a>
+<span class="sourceLineNo">112</span>                {<a name="line.112"></a>
+<span class="sourceLineNo">113</span>                        throw new PoolException(fe);<a name="line.113"></a>
+<span class="sourceLineNo">114</span>                }<a name="line.114"></a>
+<span class="sourceLineNo">115</span>        }<a name="line.115"></a>
+<span class="sourceLineNo">116</span><a name="line.116"></a>
+<span class="sourceLineNo">117</span>        /**<a name="line.117"></a>
+<span class="sourceLineNo">118</span>         * Gets an instance of a named class either from the pool or by calling the<a name="line.118"></a>
+<span class="sourceLineNo">119</span>         * Factory Service if the pool is empty. Parameters for its constructor are<a name="line.119"></a>
+<span class="sourceLineNo">120</span>         * given as an array of objects, primitive types must be wrapped with a<a name="line.120"></a>
+<span class="sourceLineNo">121</span>         * corresponding class.<a name="line.121"></a>
+<span class="sourceLineNo">122</span>         *<a name="line.122"></a>
+<span class="sourceLineNo">123</span>         * @param className the name of the class.<a name="line.123"></a>
+<span class="sourceLineNo">124</span>         * @param params    an array containing the parameters of the constructor.<a name="line.124"></a>
+<span class="sourceLineNo">125</span>         * @param signature an array containing the signature of the constructor.<a name="line.125"></a>
+<span class="sourceLineNo">126</span>         * @return the instance.<a name="line.126"></a>
+<span class="sourceLineNo">127</span>         * @throws PoolException if recycling fails.<a name="line.127"></a>
+<span class="sourceLineNo">128</span>         */<a name="line.128"></a>
+<span class="sourceLineNo">129</span>        public Object getInstance(String className, Object[] params, String[] signature) throws PoolException <a name="line.129"></a>
+<span class="sourceLineNo">130</span>        {<a name="line.130"></a>
+<span class="sourceLineNo">131</span>                try <a name="line.131"></a>
+<span class="sourceLineNo">132</span>                {<a name="line.132"></a>
+<span class="sourceLineNo">133</span>                        Object instance = pollInstance(className, params, signature);<a name="line.133"></a>
+<span class="sourceLineNo">134</span>                        return instance == null ? getFactory().getInstance(className, params, signature) : instance;<a name="line.134"></a>
+<span class="sourceLineNo">135</span>                } <a name="line.135"></a>
+<span class="sourceLineNo">136</span>                catch (FactoryException fe) <a name="line.136"></a>
+<span class="sourceLineNo">137</span>                {<a name="line.137"></a>
+<span class="sourceLineNo">138</span>                        throw new PoolException(fe);<a name="line.138"></a>
+<span class="sourceLineNo">139</span>                }<a name="line.139"></a>
+<span class="sourceLineNo">140</span>        }<a name="line.140"></a>
+<span class="sourceLineNo">141</span><a name="line.141"></a>
+<span class="sourceLineNo">142</span>        /**<a name="line.142"></a>
+<span class="sourceLineNo">143</span>         * Gets an instance of a named class either from the pool or by calling the<a name="line.143"></a>
+<span class="sourceLineNo">144</span>         * Factory Service if the pool is empty. Parameters for its constructor are<a name="line.144"></a>
+<span class="sourceLineNo">145</span>         * given as an array of objects, primitive types must be wrapped with a<a name="line.145"></a>
+<span class="sourceLineNo">146</span>         * corresponding class. The specified class loader will be passed to the Factory<a name="line.146"></a>
+<span class="sourceLineNo">147</span>         * Service.<a name="line.147"></a>
+<span class="sourceLineNo">148</span>         *<a name="line.148"></a>
+<span class="sourceLineNo">149</span>         * @param className the name of the class.<a name="line.149"></a>
+<span class="sourceLineNo">150</span>         * @param loader    the class loader.<a name="line.150"></a>
+<span class="sourceLineNo">151</span>         * @param params    an array containing the parameters of the constructor.<a name="line.151"></a>
+<span class="sourceLineNo">152</span>         * @param signature an array containing the signature of the constructor.<a name="line.152"></a>
+<span class="sourceLineNo">153</span>         * @return the instance.<a name="line.153"></a>
+<span class="sourceLineNo">154</span>         * @throws PoolException if recycling fails.<a name="line.154"></a>
+<span class="sourceLineNo">155</span>         */<a name="line.155"></a>
+<span class="sourceLineNo">156</span>        public Object getInstance(String className, ClassLoader loader, Object[] params, String[] signature)<a name="line.156"></a>
+<span class="sourceLineNo">157</span>                        throws PoolException <a name="line.157"></a>
+<span class="sourceLineNo">158</span>        {<a name="line.158"></a>
+<span class="sourceLineNo">159</span>                try <a name="line.159"></a>
+<span class="sourceLineNo">160</span>                {<a name="line.160"></a>
+<span class="sourceLineNo">161</span>                        Object instance = pollInstance(className, params, signature);<a name="line.161"></a>
+<span class="sourceLineNo">162</span>                        return instance == null ? getFactory().getInstance(className, loader, params, signature) : instance;<a name="line.162"></a>
+<span class="sourceLineNo">163</span>                } <a name="line.163"></a>
+<span class="sourceLineNo">164</span>                catch (FactoryException fe) <a name="line.164"></a>
+<span class="sourceLineNo">165</span>                {<a name="line.165"></a>
+<span class="sourceLineNo">166</span>                        throw new PoolException(fe);<a name="line.166"></a>
+<span class="sourceLineNo">167</span>                }<a name="line.167"></a>
+<span class="sourceLineNo">168</span>        }<a name="line.168"></a>
+<span class="sourceLineNo">169</span><a name="line.169"></a>
+<span class="sourceLineNo">170</span>        /**<a name="line.170"></a>
+<span class="sourceLineNo">171</span>         * Tests if specified class loaders are supported for a named class.<a name="line.171"></a>
+<span class="sourceLineNo">172</span>         *<a name="line.172"></a>
+<span class="sourceLineNo">173</span>         * @param className the name of the class.<a name="line.173"></a>
+<span class="sourceLineNo">174</span>         * @return true if class loaders are supported, false otherwise.<a name="line.174"></a>
+<span class="sourceLineNo">175</span>         * @throws FactoryException if test fails.<a name="line.175"></a>
+<span class="sourceLineNo">176</span>         */<a name="line.176"></a>
+<span class="sourceLineNo">177</span>        public boolean isLoaderSupported(String className) throws FactoryException <a name="line.177"></a>
+<span class="sourceLineNo">178</span>        {<a name="line.178"></a>
+<span class="sourceLineNo">179</span>                return getFactory().isLoaderSupported(className);<a name="line.179"></a>
+<span class="sourceLineNo">180</span>        }<a name="line.180"></a>
+<span class="sourceLineNo">181</span><a name="line.181"></a>
+<span class="sourceLineNo">182</span>        /**<a name="line.182"></a>
+<span class="sourceLineNo">183</span>         * Gets an instance of a specified class either from the pool or by instatiating<a name="line.183"></a>
+<span class="sourceLineNo">184</span>         * from the class if the pool is empty.<a name="line.184"></a>
+<span class="sourceLineNo">185</span>         *<a name="line.185"></a>
+<span class="sourceLineNo">186</span>         * @param &lt;T&gt; type of the class<a name="line.186"></a>
+<span class="sourceLineNo">187</span>         * @param clazz the class.<a name="line.187"></a>
+<span class="sourceLineNo">188</span>         * @return the instance.<a name="line.188"></a>
+<span class="sourceLineNo">189</span>         * @throws PoolException if recycling fails.<a name="line.189"></a>
+<span class="sourceLineNo">190</span>         */<a name="line.190"></a>
+<span class="sourceLineNo">191</span>        @SuppressWarnings("unchecked")<a name="line.191"></a>
+<span class="sourceLineNo">192</span>        public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz) throws PoolException <a name="line.192"></a>
+<span class="sourceLineNo">193</span>        {<a name="line.193"></a>
+<span class="sourceLineNo">194</span>                try <a name="line.194"></a>
+<span class="sourceLineNo">195</span>                {<a name="line.195"></a>
+<span class="sourceLineNo">196</span>                        T instance = pollInstance(clazz.getName(), null, null);<a name="line.196"></a>
+<span class="sourceLineNo">197</span>                        return instance == null ? (T) factoryService.getInstance(clazz) : instance;<a name="line.197"></a>
+<span class="sourceLineNo">198</span>                } <a name="line.198"></a>
+<span class="sourceLineNo">199</span>                catch (FactoryException fe) <a name="line.199"></a>
+<span class="sourceLineNo">200</span>                {<a name="line.200"></a>
+<span class="sourceLineNo">201</span>                        throw new PoolException(fe);<a name="line.201"></a>
+<span class="sourceLineNo">202</span>                }<a name="line.202"></a>
+<span class="sourceLineNo">203</span>        }<a name="line.203"></a>
+<span class="sourceLineNo">204</span><a name="line.204"></a>
+<span class="sourceLineNo">205</span>        /**<a name="line.205"></a>
+<span class="sourceLineNo">206</span>         * Gets an instance of a specified class either from the pool or by instatiating<a name="line.206"></a>
+<span class="sourceLineNo">207</span>         * from the class if the pool is empty.<a name="line.207"></a>
+<span class="sourceLineNo">208</span>         *<a name="line.208"></a>
+<span class="sourceLineNo">209</span>         * @param clazz     the class.<a name="line.209"></a>
+<span class="sourceLineNo">210</span>         * @param params    an array containing the parameters of the constructor.<a name="line.210"></a>
+<span class="sourceLineNo">211</span>         * @param signature an array containing the signature of the constructor.<a name="line.211"></a>
+<span class="sourceLineNo">212</span>         * @return the instance.<a name="line.212"></a>
+<span class="sourceLineNo">213</span>         * @throws PoolException if recycling fails.<a name="line.213"></a>
+<span class="sourceLineNo">214</span>         */<a name="line.214"></a>
+<span class="sourceLineNo">215</span>        public &lt;T&gt; T getInstance(Class&lt;?&gt; clazz, Object params[], String signature[]) throws PoolException <a name="line.215"></a>
+<span class="sourceLineNo">216</span>        {<a name="line.216"></a>
+<span class="sourceLineNo">217</span>                try <a name="line.217"></a>
+<span class="sourceLineNo">218</span>                {<a name="line.218"></a>
+<span class="sourceLineNo">219</span>                        T instance = pollInstance(clazz.getName(), params, signature);<a name="line.219"></a>
+<span class="sourceLineNo">220</span>                        <a name="line.220"></a>
+<span class="sourceLineNo">221</span>                        // TODO There is a whacky .toString() on the clazz object, <a name="line.221"></a>
+<span class="sourceLineNo">222</span>                        // but otherwise it won't compile<a name="line.222"></a>
+<span class="sourceLineNo">223</span>                        return instance == null ? getFactory().getInstance(clazz.toString(), params, signature) : instance;<a name="line.223"></a>
+<span class="sourceLineNo">224</span>                        <a name="line.224"></a>
+<span class="sourceLineNo">225</span>                } <a name="line.225"></a>
+<span class="sourceLineNo">226</span>                catch (FactoryException fe) <a name="line.226"></a>
+<span class="sourceLineNo">227</span>                {<a name="line.227"></a>
+<span class="sourceLineNo">228</span>                        throw new PoolException(fe);<a name="line.228"></a>
+<span class="sourceLineNo">229</span>                }<a name="line.229"></a>
+<span class="sourceLineNo">230</span>        }<a name="line.230"></a>
+<span class="sourceLineNo">231</span><a name="line.231"></a>
+<span class="sourceLineNo">232</span>        /**<a name="line.232"></a>
+<span class="sourceLineNo">233</span>         * Puts a used object back to the pool. Objects implementing the Recyclable<a name="line.233"></a>
+<span class="sourceLineNo">234</span>         * interface can provide a recycle method to be called when they are reused and<a name="line.234"></a>
+<span class="sourceLineNo">235</span>         * a dispose method to be called when they are returned to the pool.<a name="line.235"></a>
+<span class="sourceLineNo">236</span>         *<a name="line.236"></a>
+<span class="sourceLineNo">237</span>         * @param instance the object instance to recycle.<a name="line.237"></a>
+<span class="sourceLineNo">238</span>         * @return true if the instance was accepted.<a name="line.238"></a>
+<span class="sourceLineNo">239</span>         */<a name="line.239"></a>
+<span class="sourceLineNo">240</span>        @SuppressWarnings("unchecked")<a name="line.240"></a>
+<span class="sourceLineNo">241</span>        public boolean putInstance(Object instance) <a name="line.241"></a>
+<span class="sourceLineNo">242</span>        {<a name="line.242"></a>
+<span class="sourceLineNo">243</span>                if (instance != null) <a name="line.243"></a>
+<span class="sourceLineNo">244</span>                {<a name="line.244"></a>
+<span class="sourceLineNo">245</span>                        HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;<a name="line.245"></a>
+<span class="sourceLineNo">246</span>                        String className = instance.getClass().getName();<a name="line.246"></a>
+<span class="sourceLineNo">247</span>                        PoolBuffer pool = (PoolBuffer) repository.get(className);<a name="line.247"></a>
+<span class="sourceLineNo">248</span>                        if (pool == null) <a name="line.248"></a>
+<span class="sourceLineNo">249</span>                        {<a name="line.249"></a>
+<span class="sourceLineNo">250</span>                                pool = new PoolBuffer(getCapacity(className));<a name="line.250"></a>
+<span class="sourceLineNo">251</span>                                repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();<a name="line.251"></a>
+<span class="sourceLineNo">252</span>                                repository.put(className, pool);<a name="line.252"></a>
+<span class="sourceLineNo">253</span>                                poolRepository = repository;<a name="line.253"></a>
+<span class="sourceLineNo">254</span>                                if (instance instanceof ArrayCtorRecyclable) <a name="line.254"></a>
+<span class="sourceLineNo">255</span>                                {<a name="line.255"></a>
+<span class="sourceLineNo">256</span>                                        pool.setArrayCtorRecyclable(true);<a name="line.256"></a>
+<span class="sourceLineNo">257</span>                                }<a name="line.257"></a>
+<span class="sourceLineNo">258</span>                        }<a name="line.258"></a>
+<span class="sourceLineNo">259</span>                        return pool.offer(instance);<a name="line.259"></a>
+<span class="sourceLineNo">260</span>                } else {<a name="line.260"></a>
+<span class="sourceLineNo">261</span>                        return false;<a name="line.261"></a>
+<span class="sourceLineNo">262</span>                }<a name="line.262"></a>
+<span class="sourceLineNo">263</span>        }<a name="line.263"></a>
+<span class="sourceLineNo">264</span><a name="line.264"></a>
+<span class="sourceLineNo">265</span>        /**<a name="line.265"></a>
+<span class="sourceLineNo">266</span>         * Gets the capacity of the pool for a named class.<a name="line.266"></a>
+<span class="sourceLineNo">267</span>         *<a name="line.267"></a>
+<span class="sourceLineNo">268</span>         * @param className the name of the class.<a name="line.268"></a>
+<span class="sourceLineNo">269</span>         */<a name="line.269"></a>
+<span class="sourceLineNo">270</span>        public int getCapacity(String className) <a name="line.270"></a>
+<span class="sourceLineNo">271</span>        {<a name="line.271"></a>
+<span class="sourceLineNo">272</span>                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);<a name="line.272"></a>
+<span class="sourceLineNo">273</span>                if (pool == null) <a name="line.273"></a>
+<span class="sourceLineNo">274</span>                {<a name="line.274"></a>
+<span class="sourceLineNo">275</span>                        /* Check class specific capacity. */<a name="line.275"></a>
+<span class="sourceLineNo">276</span>                        int capacity = poolCapacity;<a name="line.276"></a>
+<span class="sourceLineNo">277</span>                        if (capacityMap != null) <a name="line.277"></a>
+<span class="sourceLineNo">278</span>                        {<a name="line.278"></a>
+<span class="sourceLineNo">279</span>                                Integer cap = (Integer) capacityMap.get(className);<a name="line.279"></a>
+<span class="sourceLineNo">280</span>                                if (cap != null) <a name="line.280"></a>
+<span class="sourceLineNo">281</span>                                {<a name="line.281"></a>
+<span class="sourceLineNo">282</span>                                        capacity = cap.intValue();<a name="line.282"></a>
+<span class="sourceLineNo">283</span>                                }<a name="line.283"></a>
+<span class="sourceLineNo">284</span>                        }<a name="line.284"></a>
+<span class="sourceLineNo">285</span>                        return capacity;<a name="line.285"></a>
+<span class="sourceLineNo">286</span>                } else {<a name="line.286"></a>
+<span class="sourceLineNo">287</span>                        return pool.capacity();<a name="line.287"></a>
+<span class="sourceLineNo">288</span>                }<a name="line.288"></a>
+<span class="sourceLineNo">289</span>        }<a name="line.289"></a>
+<span class="sourceLineNo">290</span><a name="line.290"></a>
+<span class="sourceLineNo">291</span>        /**<a name="line.291"></a>
+<span class="sourceLineNo">292</span>         * Sets the capacity of the pool for a named class. Note that the pool will be<a name="line.292"></a>
+<span class="sourceLineNo">293</span>         * cleared after the change.<a name="line.293"></a>
+<span class="sourceLineNo">294</span>         *<a name="line.294"></a>
+<span class="sourceLineNo">295</span>         * @param className the name of the class.<a name="line.295"></a>
+<span class="sourceLineNo">296</span>         * @param capacity  the new capacity.<a name="line.296"></a>
+<span class="sourceLineNo">297</span>         */<a name="line.297"></a>
+<span class="sourceLineNo">298</span>        @SuppressWarnings("unchecked")<a name="line.298"></a>
+<span class="sourceLineNo">299</span>        public void setCapacity(String className, int capacity) <a name="line.299"></a>
+<span class="sourceLineNo">300</span>        {<a name="line.300"></a>
+<span class="sourceLineNo">301</span>                HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;<a name="line.301"></a>
+<span class="sourceLineNo">302</span>                repository = repository != null ? (HashMap&lt;String, PoolBuffer&gt;) repository.clone()<a name="line.302"></a>
+<span class="sourceLineNo">303</span>                                : new HashMap&lt;String, PoolBuffer&gt;();<a name="line.303"></a>
+<span class="sourceLineNo">304</span>                repository.put(className, new PoolBuffer(capacity));<a name="line.304"></a>
+<span class="sourceLineNo">305</span>                poolRepository = repository;<a name="line.305"></a>
+<span class="sourceLineNo">306</span>        }<a name="line.306"></a>
+<span class="sourceLineNo">307</span><a name="line.307"></a>
+<span class="sourceLineNo">308</span>        /**<a name="line.308"></a>
+<span class="sourceLineNo">309</span>         * Gets the current size of the pool for a named class.<a name="line.309"></a>
+<span class="sourceLineNo">310</span>         *<a name="line.310"></a>
+<span class="sourceLineNo">311</span>         * @param className the name of the class.<a name="line.311"></a>
+<span class="sourceLineNo">312</span>         */<a name="line.312"></a>
+<span class="sourceLineNo">313</span>        public int getSize(String className) <a name="line.313"></a>
+<span class="sourceLineNo">314</span>        {<a name="line.314"></a>
+<span class="sourceLineNo">315</span>                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);<a name="line.315"></a>
+<span class="sourceLineNo">316</span>                return pool != null ? pool.size() : 0;<a name="line.316"></a>
+<span class="sourceLineNo">317</span>        }<a name="line.317"></a>
+<span class="sourceLineNo">318</span><a name="line.318"></a>
+<span class="sourceLineNo">319</span>        /**<a name="line.319"></a>
+<span class="sourceLineNo">320</span>         * Clears instances of a named class from the pool.<a name="line.320"></a>
+<span class="sourceLineNo">321</span>         *<a name="line.321"></a>
+<span class="sourceLineNo">322</span>         * @param className the name of the class.<a name="line.322"></a>
+<span class="sourceLineNo">323</span>         */<a name="line.323"></a>
+<span class="sourceLineNo">324</span>        @SuppressWarnings("unchecked")<a name="line.324"></a>
+<span class="sourceLineNo">325</span>        public void clearPool(String className) <a name="line.325"></a>
+<span class="sourceLineNo">326</span>        {<a name="line.326"></a>
+<span class="sourceLineNo">327</span>                HashMap&lt;String, PoolBuffer&gt; repository = poolRepository;<a name="line.327"></a>
+<span class="sourceLineNo">328</span>                if (repository.get(className) != null) <a name="line.328"></a>
+<span class="sourceLineNo">329</span>                {<a name="line.329"></a>
+<span class="sourceLineNo">330</span>                        repository = (HashMap&lt;String, PoolBuffer&gt;) repository.clone();<a name="line.330"></a>
+<span class="sourceLineNo">331</span>                        repository.remove(className);<a name="line.331"></a>
+<span class="sourceLineNo">332</span>                        poolRepository = repository;<a name="line.332"></a>
+<span class="sourceLineNo">333</span>                }<a name="line.333"></a>
+<span class="sourceLineNo">334</span>        }<a name="line.334"></a>
+<span class="sourceLineNo">335</span><a name="line.335"></a>
+<span class="sourceLineNo">336</span>        /**<a name="line.336"></a>
+<span class="sourceLineNo">337</span>         * Clears all instances from the pool.<a name="line.337"></a>
+<span class="sourceLineNo">338</span>         */<a name="line.338"></a>
+<span class="sourceLineNo">339</span>        public void clearPool() <a name="line.339"></a>
+<span class="sourceLineNo">340</span>        {<a name="line.340"></a>
+<span class="sourceLineNo">341</span>                poolRepository = new HashMap&lt;String, PoolBuffer&gt;();<a name="line.341"></a>
+<span class="sourceLineNo">342</span>        }<a name="line.342"></a>
+<span class="sourceLineNo">343</span><a name="line.343"></a>
+<span class="sourceLineNo">344</span>        /**<a name="line.344"></a>
+<span class="sourceLineNo">345</span>         * Polls and recycles an object of the named class from the pool.<a name="line.345"></a>
+<span class="sourceLineNo">346</span>         *<a name="line.346"></a>
+<span class="sourceLineNo">347</span>         * @param className the name of the class.<a name="line.347"></a>
+<span class="sourceLineNo">348</span>         * @param params    an array containing the parameters of the constructor.<a name="line.348"></a>
+<span class="sourceLineNo">349</span>         * @param signature an array containing the signature of the constructor.<a name="line.349"></a>
+<span class="sourceLineNo">350</span>         * @return the object or null.<a name="line.350"></a>
+<span class="sourceLineNo">351</span>         * @throws PoolException if recycling fails.<a name="line.351"></a>
+<span class="sourceLineNo">352</span>         */<a name="line.352"></a>
+<span class="sourceLineNo">353</span>        private &lt;T&gt; T pollInstance(String className, Object[] params, String[] signature) throws PoolException <a name="line.353"></a>
+<span class="sourceLineNo">354</span>        {<a name="line.354"></a>
+<span class="sourceLineNo">355</span>                PoolBuffer pool = (PoolBuffer) poolRepository.get(className);<a name="line.355"></a>
+<span class="sourceLineNo">356</span>                return pool != null ? pool.poll(params, signature, factoryService) : null;<a name="line.356"></a>
+<span class="sourceLineNo">357</span>        }<a name="line.357"></a>
+<span class="sourceLineNo">358</span><a name="line.358"></a>
+<span class="sourceLineNo">359</span>        /**<a name="line.359"></a>
+<span class="sourceLineNo">360</span>         * Gets the factory service.<a name="line.360"></a>
+<span class="sourceLineNo">361</span>         *<a name="line.361"></a>
+<span class="sourceLineNo">362</span>         * @return the factory service.<a name="line.362"></a>
+<span class="sourceLineNo">363</span>         */<a name="line.363"></a>
+<span class="sourceLineNo">364</span>        protected FactoryService getFactory() <a name="line.364"></a>
+<span class="sourceLineNo">365</span>        {<a name="line.365"></a>
+<span class="sourceLineNo">366</span>                return factoryService;<a name="line.366"></a>
+<span class="sourceLineNo">367</span>        }<a name="line.367"></a>
+<span class="sourceLineNo">368</span><a name="line.368"></a>
+<span class="sourceLineNo">369</span>        // ---------------- Avalon Lifecycle Methods ---------------------<a name="line.369"></a>
+<span class="sourceLineNo">370</span>        /* (non-Javadoc)<a name="line.370"></a>
+<span class="sourceLineNo">371</span>         * Avalon component lifecycle method<a name="line.371"></a>
+<span class="sourceLineNo">372</span>         * @see org.apache.avalon.framework.configuration.Configurable#configure(org.apache.avalon.framework.configuration.Configuration)<a name="line.372"></a>
+<span class="sourceLineNo">373</span>         */<a name="line.373"></a>
+<span class="sourceLineNo">374</span>        public void configure(Configuration conf) <a name="line.374"></a>
+<span class="sourceLineNo">375</span>        {<a name="line.375"></a>
+<span class="sourceLineNo">376</span>                final Configuration capacities = conf.getChild(POOL_CAPACITY, false);<a name="line.376"></a>
+<span class="sourceLineNo">377</span>                if (capacities != null) <a name="line.377"></a>
+<span class="sourceLineNo">378</span>                {<a name="line.378"></a>
+<span class="sourceLineNo">379</span>                        Configuration defaultConf = capacities.getChild("default");<a name="line.379"></a>
+<span class="sourceLineNo">380</span>                        int capacity = defaultConf.getValueAsInteger(DEFAULT_POOL_CAPACITY);<a name="line.380"></a>
+<span class="sourceLineNo">381</span>                        if (capacity &lt;= 0) <a name="line.381"></a>
+<span class="sourceLineNo">382</span>                        {<a name="line.382"></a>
+<span class="sourceLineNo">383</span>                                throw new IllegalArgumentException("Capacity must be &gt;0");<a name="line.383"></a>
+<span class="sourceLineNo">384</span>                        }<a name="line.384"></a>
+<span class="sourceLineNo">385</span>                        poolCapacity = capacity;<a name="line.385"></a>
+<span class="sourceLineNo">386</span>                        Configuration[] nameVal = capacities.getChildren();<a name="line.386"></a>
+<span class="sourceLineNo">387</span>                        for (int i = 0; i &lt; nameVal.length; i++) <a name="line.387"></a>
+<span class="sourceLineNo">388</span>                        {<a name="line.388"></a>
+<span class="sourceLineNo">389</span>                                String key = nameVal[i].getName();<a name="line.389"></a>
+<span class="sourceLineNo">390</span>                                if (!"default".equals(key)) <a name="line.390"></a>
+<span class="sourceLineNo">391</span>                                {<a name="line.391"></a>
+<span class="sourceLineNo">392</span>                                        capacity = nameVal[i].getValueAsInteger(poolCapacity);<a name="line.392"></a>
+<span class="sourceLineNo">393</span>                                        if (capacity &lt; 0) <a name="line.393"></a>
+<span class="sourceLineNo">394</span>                                        {<a name="line.394"></a>
+<span class="sourceLineNo">395</span>                                                capacity = poolCapacity;<a name="line.395"></a>
+<span class="sourceLineNo">396</span>                                        }<a name="line.396"></a>
+<span class="sourceLineNo">397</span>                                        <a name="line.397"></a>
+<span class="sourceLineNo">398</span>                                        if (capacityMap == null) <a name="line.398"></a>
+<span class="sourceLineNo">399</span>                                        {<a name="line.399"></a>
+<span class="sourceLineNo">400</span>                                                capacityMap = new HashMap&lt;String, Integer&gt;();<a name="line.400"></a>
+<span class="sourceLineNo">401</span>                                        }<a name="line.401"></a>
+<span class="sourceLineNo">402</span>                                        <a name="line.402"></a>
+<span class="sourceLineNo">403</span>                                        capacityMap.put(key, capacity);<a name="line.403"></a>
+<span class="sourceLineNo">404</span>                                }<a name="line.404"></a>
+<span class="sourceLineNo">405</span>                        }<a name="line.405"></a>
+<span class="sourceLineNo">406</span>                }<a name="line.406"></a>
+<span class="sourceLineNo">407</span>        }<a name="line.407"></a>
+<span class="sourceLineNo">408</span><a name="line.408"></a>
+<span class="sourceLineNo">409</span>        /**<a name="line.409"></a>
+<span class="sourceLineNo">410</span>         * Avalon component lifecycle method<a name="line.410"></a>
+<span class="sourceLineNo">411</span>         * <a name="line.411"></a>
+<span class="sourceLineNo">412</span>         * {@link org.apache.fulcrum.factory.FactoryService}<a name="line.412"></a>
+<span class="sourceLineNo">413</span>         * <a name="line.413"></a>
+<span class="sourceLineNo">414</span>         * @param manager the service manager<a name="line.414"></a>
+<span class="sourceLineNo">415</span>         */<a name="line.415"></a>
+<span class="sourceLineNo">416</span>        public void service(ServiceManager manager) <a name="line.416"></a>
+<span class="sourceLineNo">417</span>        {<a name="line.417"></a>
+<span class="sourceLineNo">418</span>                this.manager = manager;<a name="line.418"></a>
+<span class="sourceLineNo">419</span>        }<a name="line.419"></a>
+<span class="sourceLineNo">420</span><a name="line.420"></a>
+<span class="sourceLineNo">421</span>        /**<a name="line.421"></a>
+<span class="sourceLineNo">422</span>         * Avalon component lifecycle method Initializes the service by loading default<a name="line.422"></a>
+<span class="sourceLineNo">423</span>         * class loaders and customized object factories.<a name="line.423"></a>
+<span class="sourceLineNo">424</span>         *<a name="line.424"></a>
+<span class="sourceLineNo">425</span>         * @throws Exception if initialization fails.<a name="line.425"></a>
+<span class="sourceLineNo">426</span>         */<a name="line.426"></a>
+<span class="sourceLineNo">427</span>        public void initialize() throws Exception <a name="line.427"></a>
+<span class="sourceLineNo">428</span>        {<a name="line.428"></a>
+<span class="sourceLineNo">429</span>                try <a name="line.429"></a>
+<span class="sourceLineNo">430</span>                {<a name="line.430"></a>
+<span class="sourceLineNo">431</span>                        factoryService = (FactoryService) manager.lookup(FactoryService.ROLE);<a name="line.431"></a>
+<span class="sourceLineNo">432</span>                } <a name="line.432"></a>
+<span class="sourceLineNo">433</span>                catch (Exception e) <a name="line.433"></a>
+<span class="sourceLineNo">434</span>                {<a name="line.434"></a>
+<span class="sourceLineNo">435</span>                        throw new Exception("DefaultPoolService.initialize: Failed to get a Factory object", e);<a name="line.435"></a>
+<span class="sourceLineNo">436</span>                }<a name="line.436"></a>
+<span class="sourceLineNo">437</span>        }<a name="line.437"></a>
+<span class="sourceLineNo">438</span><a name="line.438"></a>
+<span class="sourceLineNo">439</span>        /**<a name="line.439"></a>
+<span class="sourceLineNo">440</span>         * Avalon component lifecycle method<a name="line.440"></a>
+<span class="sourceLineNo">441</span>         */<a name="line.441"></a>
+<span class="sourceLineNo">442</span>        public void dispose() <a name="line.442"></a>
+<span class="sourceLineNo">443</span>        {<a name="line.443"></a>
+<span class="sourceLineNo">444</span>                if (factoryService != null) <a name="line.444"></a>
+<span class="sourceLineNo">445</span>                {<a name="line.445"></a>
+<span class="sourceLineNo">446</span>                        manager.release(factoryService);<a name="line.446"></a>
+<span class="sourceLineNo">447</span>                }<a name="line.447"></a>
+<span class="sourceLineNo">448</span>                factoryService = null;<a name="line.448"></a>
+<span class="sourceLineNo">449</span>                manager = null;<a name="line.449"></a>
+<span class="sourceLineNo">450</span>        }<a name="line.450"></a>
+<span class="sourceLineNo">451</span>}<a name="line.451"></a>
 
 
 
@@ -520,6 +519,5 @@
 
 </pre>
 </div>
-</main>
 </body>
 </html>
