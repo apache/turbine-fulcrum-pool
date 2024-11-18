@@ -139,7 +139,7 @@ public class BoundedBuffer
         {
             --usedSlots_;
             @SuppressWarnings("unchecked")
-			T old = (T) array_[takePtr_];
+            T old = (T) array_[takePtr_];
             array_[takePtr_] = null;
             if (++takePtr_ >= array_.length)
                 takePtr_ = 0;
