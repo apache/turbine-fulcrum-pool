@@ -20,7 +20,7 @@ package org.apache.fulcrum.pool;
  */
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import org.apache.fulcrum.factory.FactoryService;
@@ -44,7 +44,7 @@ public class PoolBuffer
 	/**
 	 * A cache for recycling methods.
 	 */
-	private ArrayList<Recycler> recyclers;
+	private CopyOnWriteArrayList<Recycler> recyclers;
 
 	/**
 	 * The capacity initially set
@@ -60,6 +60,7 @@ public class PoolBuffer
 	{
 		this.pool = new LinkedBlockingQueue<>(capacity);
 		this.capacity = capacity;
+		this.recyclers = new CopyOnWriteArrayList<>();
 	}
 
 	/**
@@ -75,7 +76,6 @@ public class PoolBuffer
 
 	/**
 	 * Polls for an instance from the pool.
-	 *
 	 *
 	 * @param params         object parameters
 	 * @param signature      signature of the class
@@ -93,7 +93,7 @@ public class PoolBuffer
 			{
 				((ArrayCtorRecyclable) instance).recycle(params);
 			}
-			else if (instance instanceof Recyclable)
+			else if (instance instanceof Recyclable recyclable)
 			{
 				try
 				{
@@ -103,7 +103,8 @@ public class PoolBuffer
 						Method recycle = getRecycle(signature);
 						if (recycle == null)
 						{
-							synchronized (this) {
+							synchronized (this)
+							{
 								/* Make a synchronized recheck. */
 								recycle = getRecycle(signature);
 								if (recycle == null)
@@ -111,13 +112,7 @@ public class PoolBuffer
 									Class<? extends Object> clazz = instance.getClass();
 									recycle = clazz.getMethod("recycle",
 											factoryService.getSignature(clazz, params, signature));
-
-									@SuppressWarnings("unchecked")
-									ArrayList<Recycler> cache = recyclers != null
-											? (ArrayList<Recycler>) recyclers.clone()
-											: new ArrayList<Recycler>();
-									cache.add(new Recycler(recycle, signature));
-									recyclers = cache;
+									recyclers.add(new Recycler(recycle, signature));
 								}
 							}
 						}
@@ -125,7 +120,7 @@ public class PoolBuffer
 					}
 					else
 					{
-						((Recyclable) instance).recycle();
+						recyclable.recycle();
 					}
 				}
 				catch (Exception x)
@@ -187,18 +182,13 @@ public class PoolBuffer
 	 */
 	private Method getRecycle(String[] signature)
 	{
-		ArrayList<Recycler> cache = recyclers;
-		if (cache != null)
+		for (Recycler recycler : recyclers)
 		{
-			Method recycle;
-			for (Recycler recycler : cache)
-			{
-				recycle = recycler.match(signature);
-				if (recycle != null)
-                {
-                    return recycle;
-                }
-			}
+			Method recycle = recycler.match(signature);
+			if (recycle != null)
+            {
+                return recycle;
+            }
 		}
 		return null;
 	}
