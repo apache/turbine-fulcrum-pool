@@ -34,9 +34,8 @@ package org.apache.fulcrum.pool;
  *
  * @author <a href="mailto:ilkka.priha@simsoft.fi">Ilkka Priha</a>
  * @author <a href="mailto:mcconnell@apache.org">Stephen McConnell</a>
- * @version $Id$
  */
-public interface PoolService 
+public interface PoolService
 {
 	/** Avalon role - used to id the component within the manager */
 	String ROLE = PoolService.class.getName();

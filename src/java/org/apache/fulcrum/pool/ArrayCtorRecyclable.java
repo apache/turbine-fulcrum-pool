@@ -27,7 +27,6 @@ package org.apache.fulcrum.pool;
  * presents a recycle method that does not require introspection/reflection.
  *
  * @author <a href="mailto:jmcnally@collab.net">John McNally</a>
- * @version $Id$
  */
 public interface ArrayCtorRecyclable extends Recyclable
 {
@@ -35,7 +34,7 @@ public interface ArrayCtorRecyclable extends Recyclable
      * Recycles the object for a new client. Objects implementing
      * this interface must also provide a matching constructor.
      * The recycle methods must call their super.
-     * 
+     *
      * @param params the parameters to recycle
      */
     public void recycle(Object[] params);

@@ -24,11 +24,10 @@ package org.apache.fulcrum.pool;
  * different clients.
  *
  * @author <a href="mailto:ilkka.priha@simsoft.fi">Ilkka Priha</a>
- * @version $Id$
  */
-public interface Recyclable 
+public interface Recyclable
 {
-	
+
 	/**
 	 * Recycles the object for a new client. Recycle methods with parameters must be
 	 * added to implementing object and they will be automatically called by pool
@@ -47,7 +46,7 @@ public interface Recyclable
 
 	/**
 	 * Checks whether the recyclable has been disposed.
-	 * 
+	 *
 	 * @return true, if the recyclable is disposed.
 	 */
 	public boolean isDisposed();

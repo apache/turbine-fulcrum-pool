@@ -31,12 +31,12 @@ public class Recycler
      * The method.
      */
     private final Method recycle;
-    
+
     /**
      * The signature.
      */
     private final String[] signature;
-    
+
     /**
      * Constructs a new recycler.
      *
@@ -48,7 +48,7 @@ public class Recycler
         recycle = rec;
         signature = sign != null && sign.length > 0 ? sign : null;
     }
-    
+
     /**
      * Matches the given signature against
      * that of the recycle method of this recycler.
@@ -61,13 +61,16 @@ public class Recycler
     	if ( signature == null )
     	{
     		return recycle;
-    	} else {
-
-    		// test if there is a match 
-	    	if ( !Arrays.equals(sign,  signature) ) 
+    	}
+    	else
+    	{
+    		// test if there is a match
+	    	if ( !Arrays.equals(sign,  signature) )
 	    	{
 	    		return null;
-	    	} else {
+	    	}
+	    	else
+	    	{
 	    		return recycle;
 	    	}
     	}
